@@ -16,7 +16,7 @@ exclude = [
 ]
 
 [badges]
-circle-ci = { repository = "embedded-graphics/embedded-graphics", branch = "master" }
+circle-ci = { repository = "embedded-graphics/tinytga", branch = "master" }
 
 [dev-dependencies]
 paste = "1.0"
