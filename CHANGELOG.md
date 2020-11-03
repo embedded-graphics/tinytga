@@ -6,6 +6,10 @@
 
 ## [Unreleased] - ReleaseDate
 
+## [Unreleased - `embedded-graphics` repository] - ReleaseDate
+
+> Note: PR numbers from this point onwards are from the old `embedded-graphics/embedded-graphics` repository. New PR numbers above this note refer to PRs in the `embedded-graphics/tinytga` repository.
+
 ### Changed
 
 - **(breaking)** [#407](https://github.com/embedded-graphics/embedded-graphics/pull/407) The `image_descriptor` in `TgaHeader` was replaced by `image_origin` and `alpha_channel_bits`.
@@ -92,6 +96,7 @@
 
 <!-- next-url -->
 
-[unreleased]: https://github.com/jamwaffles/tinytga/compare/tinytga-v0.3.2...HEAD
-[0.3.2]: https://github.com/jamwaffles/tinytga/compare/tinytga-v0.3.0...tinytga-v0.3.2
+[unreleased]: https://github.com/embedded-graphics/tinytga/compare/tinytga-v0.3.2...HEAD
+[unreleased - `embedded-graphics` repository]: https://github.com/embedded-graphics/embedded-graphics/compare/tinytga-v0.3.2...HEAD
+[0.3.2]: https://github.com/embedded-graphics/embedded-graphics/compare/tinytga-v0.3.0...tinytga-v0.3.2
 [0.3.1]: https://github.com/embedded-graphics/embedded-graphics/compare/tinytga-v0.2.0...tinytga-v0.3.1
