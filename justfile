@@ -11,30 +11,22 @@ build: check-formatting test test-all build-benches check-readme check-links
 build-benches:
     cargo bench --no-run
 
-# Build the simulator
-build-simulator:
-    cd simulator; \
-    cargo build --release --no-default-features
-
 # Run cargo test in release mode
 test:
     cargo test --release
-
-# Run cargo test in release mode with all features enabled
-test-all:
-    cargo test --release --all-features
 
 # Check the formatting
 check-formatting:
     cargo fmt --all -- --check
 
-# Cross compiles embedded-graphics, tinytga and tinybmp for a target
+# Cross compiles tinytga for a target
 build-target target *args:
     cargo build --target {{target}} {{args}}
-    cargo build --target {{target}} --all-features {{args}}
 
-# Cross compiles embedded-graphics, tinytga and tinybmp for all targets
+# Cross compiles tinytga for all targets
 build-targets *args:
+    #!/usr/bin/env bash
+    set -e
     for target in {{targets}}; do just build-target $target {{args}}; done
 
 # Install all targets used in the `build-targets` command
