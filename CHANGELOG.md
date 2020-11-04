@@ -97,6 +97,6 @@
 <!-- next-url -->
 
 [unreleased]: https://github.com/embedded-graphics/tinytga/compare/tinytga-v0.3.2...HEAD
-[unreleased - `embedded-graphics` repository]: https://github.com/embedded-graphics/embedded-graphics/compare/tinytga-v0.3.2...HEAD
+[unreleased - `embedded-graphics` repository]: https://github.com/embedded-graphics/embedded-graphics/compare/tinytga-v0.3.2...before-split
 [0.3.2]: https://github.com/embedded-graphics/embedded-graphics/compare/tinytga-v0.3.0...tinytga-v0.3.2
 [0.3.1]: https://github.com/embedded-graphics/embedded-graphics/compare/tinytga-v0.2.0...tinytga-v0.3.1
