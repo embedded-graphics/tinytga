@@ -1,4 +1,4 @@
-use embedded_graphics::{prelude::*, primitives::Rectangle};
+use embedded_graphics_core::{prelude::*, primitives::Rectangle};
 use nom::{bytes::complete::take, IResult};
 
 use crate::{
