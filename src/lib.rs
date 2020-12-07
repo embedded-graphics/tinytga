@@ -158,7 +158,7 @@ mod raw_pixels;
 mod raw_tga;
 
 use core::marker::PhantomData;
-use embedded_graphics_core::{image::ImageDrawable, prelude::*};
+use embedded_graphics_core::prelude::*;
 
 pub use crate::{
     color_map::ColorMap,
