@@ -6,11 +6,13 @@
 
 ## [Unreleased] - ReleaseDate
 
+## [0.4.0-alpha.1] - 2020-12-27
+
 ### Changed
 
 - **(breaking)** [#3](https://github.com/embedded-graphics/tinytga/pull/3) `tinytga` now depends on `embedded-graphics-core` instead of `embedded-graphics`.
 
-## [Unreleased - `embedded-graphics` repository] - ReleaseDate
+## [0.4.0-alpha.1 - `embedded-graphics` repository] - 2020-12-27
 
 > Note: PR numbers from this point onwards are from the old `embedded-graphics/embedded-graphics` repository. New PR numbers above this note refer to PRs in the `embedded-graphics/tinytga` repository.
 
@@ -99,8 +101,9 @@
 - [#218](https://github.com/embedded-graphics/embedded-graphics/pull/218) Test README examples in CI and update them to work with latest crate versions.
 
 <!-- next-url -->
+[unreleased]: https://github.com/embedded-graphics/tinytga/compare/v0.4.0-alpha.1...HEAD
 
-[unreleased]: https://github.com/embedded-graphics/tinytga/compare/after-split...HEAD
-[unreleased - `embedded-graphics` repository]: https://github.com/embedded-graphics/embedded-graphics/compare/tinytga-v0.3.2...before-split
+[0.4.0-alpha.1]: https://github.com/embedded-graphics/tinytga/compare/after-split...v0.4.0-alpha.1
+[0.4.0-alpha.1 - `embedded-graphics` repository]: https://github.com/embedded-graphics/embedded-graphics/compare/tinytga-v0.3.2...before-split
 [0.3.2]: https://github.com/embedded-graphics/embedded-graphics/compare/tinytga-v0.3.0...tinytga-v0.3.2
 [0.3.1]: https://github.com/embedded-graphics/embedded-graphics/compare/tinytga-v0.2.0...tinytga-v0.3.1
