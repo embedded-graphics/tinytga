@@ -1,5 +1,5 @@
 use crate::{packet::Packet, raw_tga::RawTga};
-use embedded_graphics_core::prelude::*;
+use embedded_graphics::prelude::*;
 
 /// Iterator over individual TGA pixels.
 ///

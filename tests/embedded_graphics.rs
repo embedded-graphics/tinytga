@@ -38,7 +38,7 @@ fn chessboard_compressed() {
     let mut display = MockDisplay::new();
     image.draw(&mut display).unwrap();
 
-    assert_eq!(display, MockDisplay::from_pattern(CHESSBOARD_PATTERN));
+    display.assert_pattern(CHESSBOARD_PATTERN);
 }
 
 #[test]
@@ -49,7 +49,7 @@ fn chessboard_uncompressed() {
     let mut display = MockDisplay::new();
     image.draw(&mut display).unwrap();
 
-    assert_eq!(display, MockDisplay::from_pattern(CHESSBOARD_PATTERN));
+    display.assert_pattern(CHESSBOARD_PATTERN);
 }
 
 fn test_tga<C>(data: &[u8], pattern: &[&str])
@@ -62,7 +62,7 @@ where
     let mut display = MockDisplay::new();
     image.draw(&mut display).unwrap();
 
-    assert_eq!(display, MockDisplay::from_pattern(pattern));
+    display.assert_pattern(pattern);
 }
 
 fn test_dynamic_tga<C>(data: &[u8], pattern: &[&str])
@@ -77,7 +77,7 @@ where
 
     let expected: MockDisplay<Rgb888> = MockDisplay::<C>::from_pattern(pattern).map(|c| c.into());
 
-    assert_eq!(display, expected);
+    display.assert_eq(&expected);
 }
 
 macro_rules! test_tga {

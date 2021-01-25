@@ -1,5 +1,5 @@
 use core::marker::PhantomData;
-use embedded_graphics_core::prelude::*;
+use embedded_graphics::prelude::*;
 
 use crate::RawPixels;
 
