@@ -158,7 +158,7 @@ mod raw_pixels;
 mod raw_tga;
 
 use core::marker::PhantomData;
-use embedded_graphics_core::prelude::*;
+use embedded_graphics::{prelude::*, primitives::Rectangle};
 
 pub use crate::{
     color_map::ColorMap,
@@ -249,5 +249,12 @@ where
         D: DrawTarget<Color = C>,
     {
         self.raw.draw(target)
+    }
+
+    fn draw_sub_image<D>(&self, target: &mut D, area: &Rectangle) -> Result<(), D::Error>
+    where
+        D: DrawTarget<Color = Self::Color>,
+    {
+        self.draw(&mut target.translated(-area.top_left).clipped(area))
     }
 }
