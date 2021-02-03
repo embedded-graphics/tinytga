@@ -20,8 +20,7 @@ exclude = [
 circle-ci = { repository = "embedded-graphics/tinytga", branch = "master" }
 
 [dependencies]
-# TODO: remove git dependency when next e-g version is released
-embedded-graphics = { git = "https://github.com/embedded-graphics/embedded-graphics.git" }
+embedded-graphics = "0.7.0-alpha.3"
 nom = { version = "6.0.1", default-features = false }
 
 [dev-dependencies]
