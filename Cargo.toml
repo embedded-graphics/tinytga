@@ -20,7 +20,7 @@ exclude = [
 circle-ci = { repository = "embedded-graphics/tinytga", branch = "master" }
 
 [dependencies]
-embedded-graphics = "0.7.0-alpha.3"
+embedded-graphics = "0.7.0-beta.2"
 nom = { version = "6.0.1", default-features = false }
 
 [dev-dependencies]
