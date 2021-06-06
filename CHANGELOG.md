@@ -6,6 +6,8 @@
 
 ## [Unreleased] - ReleaseDate
 
+## [0.4.0] - 2021-06-06
+
 ## [0.4.0-beta.1] - 2021-05-24
 
 ## [0.4.0-alpha.1] - 2020-12-27
@@ -103,7 +105,8 @@
 - [#218](https://github.com/embedded-graphics/embedded-graphics/pull/218) Test README examples in CI and update them to work with latest crate versions.
 
 <!-- next-url -->
-[unreleased]: https://github.com/embedded-graphics/tinytga/compare/v0.4.0-beta.1...HEAD
+[unreleased]: https://github.com/embedded-graphics/tinytga/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/embedded-graphics/tinytga/compare/v0.4.0-beta.1...v0.4.0
 [0.4.0-beta.1]: https://github.com/embedded-graphics/tinytga/compare/v0.4.0-alpha.1...v0.4.0-beta.1
 
 [0.4.0-alpha.1]: https://github.com/embedded-graphics/tinytga/compare/after-split...v0.4.0-alpha.1
