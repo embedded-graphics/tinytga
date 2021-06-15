@@ -6,6 +6,8 @@
 
 ## [Unreleased] - ReleaseDate
 
+- [#10](https://github.com/embedded-graphics/tinybmp/pull/10) Bump embedded-graphics minimum version from 0.7.0 to 0.7.1
+
 ## [0.4.0] - 2021-06-06
 
 ## [0.4.0-beta.1] - 2021-05-24
@@ -105,10 +107,10 @@
 - [#218](https://github.com/embedded-graphics/embedded-graphics/pull/218) Test README examples in CI and update them to work with latest crate versions.
 
 <!-- next-url -->
+
 [unreleased]: https://github.com/embedded-graphics/tinytga/compare/v0.4.0...HEAD
 [0.4.0]: https://github.com/embedded-graphics/tinytga/compare/v0.4.0-beta.1...v0.4.0
 [0.4.0-beta.1]: https://github.com/embedded-graphics/tinytga/compare/v0.4.0-alpha.1...v0.4.0-beta.1
-
 [0.4.0-alpha.1]: https://github.com/embedded-graphics/tinytga/compare/after-split...v0.4.0-alpha.1
 [0.4.0-alpha.1 - `embedded-graphics` repository]: https://github.com/embedded-graphics/embedded-graphics/compare/tinytga-v0.3.2...before-split
 [0.3.2]: https://github.com/embedded-graphics/embedded-graphics/compare/tinytga-v0.3.0...tinytga-v0.3.2
