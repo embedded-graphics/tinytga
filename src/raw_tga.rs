@@ -14,11 +14,11 @@ use crate::{
 ///
 /// `RawTga` can be used to access lower level information about a TGA file and to access the
 /// raw pixel data. It can be created directly by using the [`from_slice`] constructor or accessed
-/// by calling [`raw`] method of a [`Tga`] object.
+/// by calling [`as_raw`] method of a [`Tga`] object.
 ///
 /// [`from_slice`]: #method.from_slice
 /// [`Tga`]: struct.Tga.html
-/// [`raw`]: struct.Tga.html#method.raw
+/// [`as_raw`]: struct.Tga.html#method.as_raw
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct RawTga<'a> {
     /// Image data
