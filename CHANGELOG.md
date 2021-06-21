@@ -8,6 +8,8 @@
 
 ## [0.4.1] - 2021-06-16
 
+### Changed
+
 - [#10](https://github.com/embedded-graphics/tinybmp/pull/10) Bump embedded-graphics minimum version from 0.7.0 to 0.7.1
 
 ## [0.4.0] - 2021-06-06
