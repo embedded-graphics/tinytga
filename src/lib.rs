@@ -250,7 +250,7 @@ where
 
     /// Returns an iterator over the pixels in this image.
     pub fn pixels(&'a self) -> Pixels<'a, Dynamic, C> {
-        Pixels::new_dynamic(self.raw.pixels())
+        Pixels::new_dynamic(self.raw.pixels(), self.image_color_type)
     }
 }
 

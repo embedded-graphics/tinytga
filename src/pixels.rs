@@ -40,10 +40,10 @@ impl<'a, CT> Pixels<'a, Dynamic, CT>
 where
     CT: PixelColor + From<Gray8> + From<Rgb555> + From<Rgb888>,
 {
-    pub(crate) fn new_dynamic(raw: RawPixels<'a>) -> Self {
+    pub(crate) fn new_dynamic(raw: RawPixels<'a>, color_type: ColorType) -> Self {
         Self {
             raw,
-            color_type: ColorType::Gray8, // not used
+            color_type,
             image_color_type: PhantomData,
             target_color_type: PhantomData,
         }
