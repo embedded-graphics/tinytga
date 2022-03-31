@@ -128,7 +128,7 @@ impl<'a> RawTga<'a> {
     }
 
     /// Returns an iterator over the raw pixels in this image.
-    pub fn pixels<'b>(&'b self) -> RawPixels<'b, 'a> {
+    pub fn pixels(&'a self) -> RawPixels<'a> {
         RawPixels::new(self)
     }
 

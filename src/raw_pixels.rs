@@ -7,19 +7,19 @@ use embedded_graphics::prelude::*;
 ///
 /// [`pixels`]: struct.RawTga.html#method.pixels
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
-pub struct RawPixels<'a, 'b> {
+pub struct RawPixels<'a> {
     /// Reference to original TGA image
-    raw_tga: &'a RawTga<'b>,
+    raw_tga: &'a RawTga<'a>,
 
     position: Point,
 
-    packet: Packet<'b>,
+    packet: Packet<'a>,
 
-    remaining_data: &'b [u8],
+    remaining_data: &'a [u8],
 }
 
-impl<'a, 'b> RawPixels<'a, 'b> {
-    pub(crate) fn new(raw_tga: &'a RawTga<'b>) -> Self {
+impl<'a> RawPixels<'a> {
+    pub(crate) fn new(raw_tga: &'a RawTga<'a>) -> Self {
         let size = raw_tga.size();
         let remaining_pixels = size.width as usize * size.height as usize;
 
@@ -44,7 +44,7 @@ impl<'a, 'b> RawPixels<'a, 'b> {
         };
 
         Self {
-            raw_tga: raw_tga,
+            raw_tga,
             packet,
             remaining_data: data,
             position: Point::new(0, start_y as i32),
@@ -75,7 +75,7 @@ impl<'a, 'b> RawPixels<'a, 'b> {
     }
 }
 
-impl<'a, 'b> Iterator for RawPixels<'a, 'b> {
+impl Iterator for RawPixels<'_> {
     type Item = RawPixel;
 
     fn next(&mut self) -> Option<Self::Item> {

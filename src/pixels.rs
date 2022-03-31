@@ -9,13 +9,13 @@ use crate::RawPixels;
 ///
 /// [`pixels`]: struct.Tga.html#method.pixels
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
-pub struct Pixels<'a, 'b, C> {
-    raw: RawPixels<'a, 'b>,
+pub struct Pixels<'a, C> {
+    raw: RawPixels<'a>,
     color_type: PhantomData<C>,
 }
 
-impl<'a, 'b, C> Pixels<'a, 'b, C> {
-    pub(crate) fn new(raw: RawPixels<'a, 'b>) -> Self {
+impl<'a, C> Pixels<'a, C> {
+    pub(crate) fn new(raw: RawPixels<'a>) -> Self {
         Self {
             raw,
             color_type: PhantomData,
@@ -23,7 +23,7 @@ impl<'a, 'b, C> Pixels<'a, 'b, C> {
     }
 }
 
-impl<C> Iterator for Pixels<'_, '_, C>
+impl<C> Iterator for Pixels<'_, C>
 where
     C: PixelColor + From<<C as PixelColor>::Raw>,
 {

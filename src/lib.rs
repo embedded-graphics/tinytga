@@ -227,7 +227,7 @@ where
     }
 
     /// Returns an iterator over the pixels in this image.
-    pub fn pixels<'b>(&'b self) -> Pixels<'b, 'a, C> {
+    pub fn pixels(&'a self) -> Pixels<'a, C> {
         Pixels::new(self.raw.pixels())
     }
 }
