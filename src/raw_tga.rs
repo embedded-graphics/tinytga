@@ -1,4 +1,4 @@
-use embedded_graphics::{prelude::*, primitives::Rectangle};
+use embedded_graphics::prelude::*;
 use nom::{bytes::complete::take, IResult};
 
 use crate::{
@@ -6,7 +6,6 @@ use crate::{
     footer::TgaFooter,
     header::{Bpp, ImageOrigin, ImageType, TgaHeader},
     parse_error::ParseError,
-    pixels::Pixels,
     raw_pixels::RawPixels,
 };
 
@@ -179,24 +178,6 @@ impl<'a> RawTga<'a> {
             .ok()
             .map(|(_input, id)| id)
             .filter(|id| !id.is_empty())
-    }
-
-    pub(crate) fn draw<D>(&self, target: &mut D) -> Result<(), D::Error>
-    where
-        D: DrawTarget,
-        D::Color: From<<D::Color as PixelColor>::Raw>,
-    {
-        let pixels = Pixels::<D::Color>::new(self.pixels());
-
-        // TGA files with the origin in the top left corner can be drawn using `fill_contiguous`.
-        // All other origins are drawn by falling back to `draw_iter`.
-        if self.image_origin() == ImageOrigin::TopLeft {
-            let bounding_box = Rectangle::new(Point::zero(), self.size);
-
-            target.fill_contiguous(&bounding_box, pixels.map(|Pixel(_, color)| color))
-        } else {
-            target.draw_iter(pixels)
-        }
     }
 }
 

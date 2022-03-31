@@ -32,29 +32,29 @@
 //! # Ok::<(), core::convert::Infallible>(()) }
 //! ```
 //!
-//! ## Using `DynamicTga` to draw an image
-//!
-//! The previous example had the limitation that the color format needed to be known at compile
-//! time. In some use cases this can be a problem, for example if user supplied images should
-//! be displayed. To handle these cases [`DynamicTga`] can be used, which performs color conversion
-//! if necessary.
-//!
-//! ```rust
-//! # fn main() -> Result<(), core::convert::Infallible> {
-//! # let mut display = embedded_graphics::mock_display::MockDisplay::<Rgb888>::default();
-//! use embedded_graphics::{image::Image, pixelcolor::Rgb888, prelude::*};
-//! use tinytga::DynamicTga;
-//!
-//! // Include an image from a local path as bytes
-//! let data = include_bytes!("../tests/chessboard_4px_rle.tga");
-//!
-//! let tga = DynamicTga::from_slice(data).unwrap();
-//!
-//! let image = Image::new(&tga, Point::zero());
-//!
-//! image.draw(&mut display)?;
-//! # Ok::<(), core::convert::Infallible>(()) }
-//! ```
+// //! ## Using `DynamicTga` to draw an image
+// //!
+// //! The previous example had the limitation that the color format needed to be known at compile
+// //! time. In some use cases this can be a problem, for example if user supplied images should
+// //! be displayed. To handle these cases [`DynamicTga`] can be used, which performs color conversion
+// //! if necessary.
+// //!
+// //! ```rust
+// //! # fn main() -> Result<(), core::convert::Infallible> {
+// //! # let mut display = embedded_graphics::mock_display::MockDisplay::<Rgb888>::default();
+// //! use embedded_graphics::{image::Image, pixelcolor::Rgb888, prelude::*};
+// //! use tinytga::DynamicTga;
+// //!
+// //! // Include an image from a local path as bytes
+// //! let data = include_bytes!("../tests/chessboard_4px_rle.tga");
+// //!
+// //! let tga = DynamicTga::from_slice(data).unwrap();
+// //!
+// //! let image = Image::new(&tga, Point::zero());
+// //!
+// //! image.draw(&mut display)?;
+// //! # Ok::<(), core::convert::Infallible>(()) }
+// //! ```
 //! ## Accessing pixels using an embedded-graphics color type
 //!
 //! If [embedded-graphics] is not used to draw the TGA image, the color types provided by
@@ -148,7 +148,6 @@
 #![deny(unused_qualifications)]
 
 mod color_map;
-mod dynamic_tga;
 mod footer;
 mod header;
 mod packet;
@@ -158,11 +157,15 @@ mod raw_pixels;
 mod raw_tga;
 
 use core::marker::PhantomData;
-use embedded_graphics::{prelude::*, primitives::Rectangle};
+use embedded_graphics::{
+    pixelcolor::{Gray8, Rgb555, Rgb888},
+    prelude::*,
+    primitives::Rectangle,
+};
+use pixels::Dynamic;
 
 pub use crate::{
     color_map::ColorMap,
-    dynamic_tga::DynamicTga,
     header::{Bpp, ImageOrigin, ImageType, TgaHeader},
     parse_error::ParseError,
     pixels::Pixels,
@@ -176,13 +179,15 @@ pub struct Tga<'a, C> {
     /// Raw TGA file.
     raw: RawTga<'a>,
 
+    image_color_type: ColorType,
+
     /// Color type.
-    color_type: PhantomData<C>,
+    target_color_type: PhantomData<C>,
 }
 
 impl<'a, C> Tga<'a, C>
 where
-    C: PixelColor + From<<C as PixelColor>::Raw>,
+    C: PixelColor + From<Gray8> + From<Rgb555> + From<Rgb888>,
 {
     /// Parses a TGA image from a byte slice.
     ///
@@ -195,27 +200,44 @@ where
     pub fn from_slice(data: &'a [u8]) -> Result<Self, ParseError> {
         let raw = RawTga::from_slice(data)?;
 
-        Self::from_raw(raw)
-    }
-
-    /// Converts a raw TGA object into a embedded-graphics TGA object.
-    ///
-    /// # Errors
-    ///
-    /// If the bit depth of the source image does not match the bit depth of the output color type
-    /// `C`, this method will return a [`ParseError::MismatchedBpp`] error.
-    ///
-    /// [`ParseError::MismatchedBpp`]: enum.ParseError.html#variant.MismatchedBpp
-    pub fn from_raw(raw: RawTga<'a>) -> Result<Self, ParseError> {
-        if C::Raw::BITS_PER_PIXEL != usize::from(raw.color_bpp().bits()) {
-            return Err(ParseError::MismatchedBpp(raw.color_bpp().bits()));
-        }
+        let image_color_type = match (raw.color_bpp(), raw.image_type().is_monochrome()) {
+            (Bpp::Bits8, true) => ColorType::Gray8,
+            (Bpp::Bits16, false) => ColorType::Rgb555,
+            (Bpp::Bits24, false) => ColorType::Rgb888,
+            _ => {
+                return Err(ParseError::UnsupportedDynamicTgaType(
+                    //TODO: rename
+                    raw.image_type(),
+                    raw.color_bpp(),
+                ));
+            }
+        };
 
         Ok(Tga {
             raw,
-            color_type: PhantomData,
+            image_color_type,
+            target_color_type: PhantomData,
         })
     }
+
+    // /// Converts a raw TGA object into a embedded-graphics TGA object.
+    // ///
+    // /// # Errors
+    // ///
+    // /// If the bit depth of the source image does not match the bit depth of the output color type
+    // /// `C`, this method will return a [`ParseError::MismatchedBpp`] error.
+    // ///
+    // /// [`ParseError::MismatchedBpp`]: enum.ParseError.html#variant.MismatchedBpp
+    // pub fn from_raw(raw: RawTga<'a>) -> Result<Self, ParseError> {
+    //     if C::Raw::BITS_PER_PIXEL != usize::from(raw.color_bpp().bits()) {
+    //         return Err(ParseError::MismatchedBpp(raw.color_bpp().bits()));
+    //     }
+
+    //     Ok(Tga {
+    //         raw,
+    //         color_type: PhantomData,
+    //     })
+    // }
 
     /// Returns a reference to the raw TGA image.
     ///
@@ -227,8 +249,8 @@ where
     }
 
     /// Returns an iterator over the pixels in this image.
-    pub fn pixels(&'a self) -> Pixels<'a, C> {
-        Pixels::new(self.raw.pixels())
+    pub fn pixels(&'a self) -> Pixels<'a, Dynamic, C> {
+        Pixels::new_dynamic(self.raw.pixels())
     }
 }
 
@@ -240,7 +262,7 @@ impl<C> OriginDimensions for Tga<'_, C> {
 
 impl<C> ImageDrawable for Tga<'_, C>
 where
-    C: PixelColor + From<<C as PixelColor>::Raw>,
+    C: PixelColor + From<Gray8> + From<Rgb555> + From<Rgb888>,
 {
     type Color = C;
 
@@ -248,7 +270,35 @@ where
     where
         D: DrawTarget<Color = C>,
     {
-        self.raw.draw(target)
+        let raw_pixels = self.raw.pixels();
+        //self.raw.draw(target)
+
+        // TGA files with the origin in the top left corner can be drawn using `fill_contiguous`.
+        // All other origins are drawn by falling back to `draw_iter`.
+        if self.raw.image_origin() == ImageOrigin::TopLeft {
+            let bounding_box = Rectangle::new(Point::zero(), self.raw.size());
+
+            match self.image_color_type {
+                ColorType::Gray8 => target.fill_contiguous(
+                    &bounding_box,
+                    Pixels::<Gray8, _>::new(raw_pixels).map(|Pixel(_, color)| color),
+                ),
+                ColorType::Rgb555 => target.fill_contiguous(
+                    &bounding_box,
+                    Pixels::<Rgb555, _>::new(raw_pixels).map(|Pixel(_, color)| color),
+                ),
+                ColorType::Rgb888 => target.fill_contiguous(
+                    &bounding_box,
+                    Pixels::<Rgb888, _>::new(raw_pixels).map(|Pixel(_, color)| color),
+                ),
+            }
+        } else {
+            match self.image_color_type {
+                ColorType::Gray8 => target.draw_iter(Pixels::<Gray8, _>::new(raw_pixels)),
+                ColorType::Rgb555 => target.draw_iter(Pixels::<Rgb555, _>::new(raw_pixels)),
+                ColorType::Rgb888 => target.draw_iter(Pixels::<Rgb888, _>::new(raw_pixels)),
+            }
+        }
     }
 
     fn draw_sub_image<D>(&self, target: &mut D, area: &Rectangle) -> Result<(), D::Error>
@@ -257,4 +307,11 @@ where
     {
         self.draw(&mut target.translated(-area.top_left).clipped(area))
     }
+}
+
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+pub(crate) enum ColorType {
+    Gray8,
+    Rgb555,
+    Rgb888,
 }
