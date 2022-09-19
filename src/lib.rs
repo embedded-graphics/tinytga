@@ -128,6 +128,11 @@
 //! The performance difference between the origins will depend on the display driver, but using
 //! images with the origin at the top left corner will generally result in the best performance.
 //!
+//! # Minimum supported Rust version
+//!
+//! The minimum supported Rust version for tinytga is `1.61` or greater.
+//! Ensure you have the correct version of Rust installed, preferably through <https://rustup.rs>.
+//!
 //! [`ImageOrigin`]: enum.ImageOrigin.html
 //! [embedded-graphics]: https://docs.rs/embedded-graphics
 //! [`Tga`]: ./struct.Tga.html

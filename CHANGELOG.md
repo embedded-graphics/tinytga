@@ -10,6 +10,10 @@
 
 - [#16](https://github.com/embedded-graphics/tinybmp/pull/16) Added `display` example to display TGA images using the embedded-graphics simulator.
 
+### Changed
+
+- **(breaking)** [#16](https://github.com/embedded-graphics/tinybmp/pull/16) Use 1.61 as MSRV.
+
 ## [0.4.1] - 2021-06-16
 
 ### Changed

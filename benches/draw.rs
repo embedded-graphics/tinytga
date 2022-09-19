@@ -1,7 +1,7 @@
 use criterion::{criterion_group, criterion_main, Criterion};
 use embedded_graphics::{
     image::Image,
-    pixelcolor::{Rgb555, Gray8, Rgb888},
+    pixelcolor::{Gray8, Rgb555, Rgb888},
     prelude::*,
 };
 use tinytga::Tga;
@@ -48,9 +48,12 @@ macro_rules! bench {
         $c.bench_function(concat!(stringify!($color_type), " ", $file), |b| {
             let mut fb = Framebuffer::<$color_type>::new();
             b.iter(|| {
-                let bmp =
-                    Tga::<$color_type>::from_slice(include_bytes!(concat!("../tests/", $file, ".tga")))
-                        .unwrap();
+                let bmp = Tga::<$color_type>::from_slice(include_bytes!(concat!(
+                    "../tests/",
+                    $file,
+                    ".tga"
+                )))
+                .unwrap();
                 Image::new(&bmp, Point::zero()).draw(&mut fb).unwrap();
             })
         });
@@ -77,7 +80,7 @@ macro_rules! bench {
         bench!($c, $color_type, "logo_type10_24bpp_tl");
         bench!($c, $color_type, "logo_type11_bl");
         bench!($c, $color_type, "logo_type11_tl");
-    }
+    };
 }
 
 fn draw_benchmarks(c: &mut Criterion) {
