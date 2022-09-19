@@ -27,6 +27,6 @@ pub enum ParseError {
     /// [`Tga::from_slice`]: struct.Tga.html#method.from_slice
     MismatchedBpp(u8),
 
-    /// The image type and bits per pixel combination isn't supported by `DynamicTga`.
-    UnsupportedDynamicTgaType(ImageType, Bpp),
+    /// Unsupported combination of image type and bits per pixel.
+    UnsupportedTgaType(ImageType, Bpp),
 }

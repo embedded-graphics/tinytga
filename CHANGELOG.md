@@ -6,6 +6,10 @@
 
 ## [Unreleased] - ReleaseDate
 
+### Added
+
+- [#16](https://github.com/embedded-graphics/tinybmp/pull/16) Added `display` example to display TGA images using the embedded-graphics simulator.
+
 ## [0.4.1] - 2021-06-16
 
 ### Changed

@@ -205,8 +205,7 @@ where
             (Bpp::Bits16, false) => ColorType::Rgb555,
             (Bpp::Bits24, false) => ColorType::Rgb888,
             _ => {
-                return Err(ParseError::UnsupportedDynamicTgaType(
-                    //TODO: rename
+                return Err(ParseError::UnsupportedTgaType(
                     raw.image_type(),
                     raw.color_bpp(),
                 ));
@@ -271,7 +270,6 @@ where
         D: DrawTarget<Color = C>,
     {
         let raw_pixels = self.raw.pixels();
-        //self.raw.draw(target)
 
         // TGA files with the origin in the top left corner can be drawn using `fill_contiguous`.
         // All other origins are drawn by falling back to `draw_iter`.

@@ -30,3 +30,5 @@ nom = { version = "6.0.1", default-features = false }
 [dev-dependencies]
 paste = "1.0"
 criterion = "0.3.5"
+clap = { version = "3.2.22", features = ["derive"] }
+embedded-graphics-simulator = "0.4.0"
