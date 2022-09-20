@@ -11,9 +11,9 @@ build: check-formatting test build-benches check-readme check-links
 build-benches:
     cargo bench --no-run
 
-# Run cargo test in release mode
+# Run cargo test
 test:
-    cargo test --release
+    cargo test
 
 # Check the formatting
 check-formatting:
