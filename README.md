@@ -38,6 +38,85 @@ let image = Image::new(&tga, Point::zero());
 image.draw(&mut display)?;
 ```
 
+### Accessing pixels using an embedded-graphics color type
+
+If [embedded-graphics] is not used to draw the TGA image, the color types provided by
+[embedded-graphics] can still be used to access the pixel data using the
+`pixels` method.
+
+```rust
+use embedded_graphics::{prelude::*, pixelcolor::Rgb888};
+use tinytga::{Bpp, ImageOrigin, ImageType, RawPixel, Tga, TgaHeader};
+
+// Include an image from a local path as bytes
+let data = include_bytes!("../tests/chessboard_4px_rle.tga");
+
+// Create a TGA instance from a byte slice.
+// The color type is set by defining the type of the `img` variable.
+let img: Tga<Rgb888> = Tga::from_slice(data).unwrap();
+
+// Check the size of the image.
+assert_eq!(img.size(), Size::new(4, 4));
+
+// Collect pixels into a vector.
+let pixels: Vec<_> = img.pixels().collect();
+```
+
+### Accessing raw pixel data
+
+If [embedded-graphics] is not used in the target application, the raw image data can be
+accessed with the `pixels` method on
+`RawTga`. The returned iterator produces a `u32` for each pixel value.
+
+```rust
+use embedded_graphics::{prelude::*, pixelcolor::Rgb888};
+use tinytga::{Bpp, ImageOrigin, ImageType, RawPixel, RawTga, TgaHeader};
+
+// Include an image from a local path as bytes.
+let data = include_bytes!("../tests/chessboard_4px_rle.tga");
+
+// Create a TGA instance from a byte slice.
+let img = RawTga::from_slice(data).unwrap();
+
+// Take a look at the raw image header.
+assert_eq!(
+    img.header(),
+    TgaHeader {
+        id_len: 0,
+        has_color_map: false,
+        image_type: ImageType::RleTruecolor,
+        color_map_start: 0,
+        color_map_len: 0,
+        color_map_depth: None,
+        x_origin: 0,
+        y_origin: 4,
+        width: 4,
+        height: 4,
+        pixel_depth: Bpp::Bits24,
+        image_origin: ImageOrigin::TopLeft,
+        alpha_channel_depth: 0,
+    }
+);
+
+// Collect raw pixels into a vector.
+let pixels: Vec<_> = img.pixels().collect();
+```
+
+## Embedded-graphics drawing performance
+
+`Tga` should by used instead of `DynamicTga` when possible to reduce the risk of
+accidentally adding unnecessary color conversions.
+
+`tinytga` uses different code paths to draw images with different `ImageOrigin`s.
+The performance difference between the origins will depend on the display driver, but using
+images with the origin at the top left corner will generally result in the best performance.
+
+## Minimum supported Rust version
+
+The minimum supported Rust version for tinytga is `1.61` or greater.
+Ensure you have the correct version of Rust installed, preferably through <https://rustup.rs>.
+
+[embedded-graphics]: https://docs.rs/embedded-graphics
 
 ## License
 

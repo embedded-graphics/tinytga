@@ -32,29 +32,6 @@
 //! # Ok::<(), core::convert::Infallible>(()) }
 //! ```
 //!
-// //! ## Using `DynamicTga` to draw an image
-// //!
-// //! The previous example had the limitation that the color format needed to be known at compile
-// //! time. In some use cases this can be a problem, for example if user supplied images should
-// //! be displayed. To handle these cases [`DynamicTga`] can be used, which performs color conversion
-// //! if necessary.
-// //!
-// //! ```rust
-// //! # fn main() -> Result<(), core::convert::Infallible> {
-// //! # let mut display = embedded_graphics::mock_display::MockDisplay::<Rgb888>::default();
-// //! use embedded_graphics::{image::Image, pixelcolor::Rgb888, prelude::*};
-// //! use tinytga::DynamicTga;
-// //!
-// //! // Include an image from a local path as bytes
-// //! let data = include_bytes!("../tests/chessboard_4px_rle.tga");
-// //!
-// //! let tga = DynamicTga::from_slice(data).unwrap();
-// //!
-// //! let image = Image::new(&tga, Point::zero());
-// //!
-// //! image.draw(&mut display)?;
-// //! # Ok::<(), core::convert::Infallible>(()) }
-// //! ```
 //! ## Accessing pixels using an embedded-graphics color type
 //!
 //! If [embedded-graphics] is not used to draw the TGA image, the color types provided by
