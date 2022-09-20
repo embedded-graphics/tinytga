@@ -155,26 +155,28 @@
 mod color_map;
 mod footer;
 mod header;
-mod packet;
 mod parse_error;
 mod pixels;
-mod raw_pixels;
+mod raw_iter;
 mod raw_tga;
 
 use core::marker::PhantomData;
 use embedded_graphics::{
-    pixelcolor::{Gray8, Rgb555, Rgb888},
+    pixelcolor::{
+        raw::{RawU16, RawU24, RawU8},
+        Gray8, Rgb555, Rgb888,
+    },
     prelude::*,
     primitives::Rectangle,
 };
-use pixels::Dynamic;
+use raw_iter::{RawColors, Rle, Uncompressed};
 
 pub use crate::{
     color_map::ColorMap,
     header::{Bpp, ImageOrigin, ImageType, TgaHeader},
     parse_error::ParseError,
     pixels::Pixels,
-    raw_pixels::{RawPixel, RawPixels},
+    raw_iter::{RawPixel, RawPixels},
     raw_tga::RawTga,
 };
 
@@ -195,13 +197,6 @@ where
     C: PixelColor + From<Gray8> + From<Rgb555> + From<Rgb888>,
 {
     /// Parses a TGA image from a byte slice.
-    ///
-    /// # Errors
-    ///
-    /// If the bit depth of the source image does not match the bit depth of the output color type
-    /// `C`, this method will return a [`ParseError::MismatchedBpp`] error.
-    ///
-    /// [`ParseError::MismatchedBpp`]: enum.ParseError.html#variant.MismatchedBpp
     pub fn from_slice(data: &'a [u8]) -> Result<Self, ParseError> {
         let raw = RawTga::from_slice(data)?;
 
@@ -224,25 +219,6 @@ where
         })
     }
 
-    // /// Converts a raw TGA object into a embedded-graphics TGA object.
-    // ///
-    // /// # Errors
-    // ///
-    // /// If the bit depth of the source image does not match the bit depth of the output color type
-    // /// `C`, this method will return a [`ParseError::MismatchedBpp`] error.
-    // ///
-    // /// [`ParseError::MismatchedBpp`]: enum.ParseError.html#variant.MismatchedBpp
-    // pub fn from_raw(raw: RawTga<'a>) -> Result<Self, ParseError> {
-    //     if C::Raw::BITS_PER_PIXEL != usize::from(raw.color_bpp().bits()) {
-    //         return Err(ParseError::MismatchedBpp(raw.color_bpp().bits()));
-    //     }
-
-    //     Ok(Tga {
-    //         raw,
-    //         color_type: PhantomData,
-    //     })
-    // }
-
     /// Returns a reference to the raw TGA image.
     ///
     /// The [`RawTga`] object can be used to access lower level details about the TGA file.
@@ -253,8 +229,104 @@ where
     }
 
     /// Returns an iterator over the pixels in this image.
-    pub fn pixels(&'a self) -> Pixels<'a, Dynamic, C> {
-        Pixels::new_dynamic(self.raw.pixels(), self.image_color_type)
+    pub fn pixels(&self) -> Pixels<'_, C> {
+        Pixels::new(self)
+    }
+
+    fn draw_colors<D>(
+        &self,
+        target: &mut D,
+        mut colors: impl Iterator<Item = C>,
+    ) -> Result<(), D::Error>
+    where
+        D: DrawTarget<Color = C>,
+    {
+        let bounding_box = self.bounding_box();
+        if bounding_box.is_zero_sized() {
+            return Ok(());
+        }
+
+        let origin = self.raw.image_origin();
+
+        // TGA files with the origin in the top left corner can be drawn using `fill_contiguous`.
+        // All other origins are drawn by falling back to `draw_iter`.
+        match origin {
+            ImageOrigin::TopLeft => target.fill_contiguous(&bounding_box, colors),
+            ImageOrigin::BottomLeft => {
+                let mut row_rect =
+                    Rectangle::new(Point::zero(), Size::new(bounding_box.size.width, 1));
+
+                for y in bounding_box.rows().rev() {
+                    row_rect.top_left.y = y;
+                    let row_colors = (&mut colors).take(bounding_box.size.width as usize);
+                    target.fill_contiguous(&row_rect, row_colors)?;
+                }
+
+                Ok(())
+            }
+            // TODO: handle top right and bottom right origins (with test)
+            ImageOrigin::TopRight => todo!(),
+            ImageOrigin::BottomRight => todo!(),
+        }
+    }
+
+    fn draw_regular<D, CI, F>(
+        &self,
+        target: &mut D,
+        colors: RawColors<'a, CI::Raw, F>,
+    ) -> Result<(), D::Error>
+    where
+        D: DrawTarget<Color = C>,
+        CI: PixelColor + From<CI::Raw> + Into<C>,
+        RawColors<'a, CI::Raw, F>: Iterator<Item = CI::Raw>,
+    {
+        self.draw_colors(target, colors.map(|c| CI::from(c).into()))
+    }
+
+    fn draw_color_mapped<D, R, F>(
+        &self,
+        target: &mut D,
+        indices: RawColors<'a, R, F>,
+    ) -> Result<(), D::Error>
+    where
+        D: DrawTarget<Color = C>,
+        R: RawData,
+        R::Storage: Into<u32>,
+        RawColors<'a, R, F>: Iterator<Item = R>,
+    {
+        let color_map = if let Some(color_map) = self.raw.color_map() {
+            color_map
+        } else {
+            return Ok(());
+        };
+
+        match self.image_color_type {
+            ColorType::Gray8 => {
+                //TODO: add test for this image color type
+                let colors = indices.map(|index| {
+                    let index = index.into_inner().into() as usize;
+                    color_map.get::<Gray8>(index).unwrap().into()
+                });
+
+                self.draw_colors(target, colors)
+            }
+            ColorType::Rgb555 => {
+                let colors = indices.map(|index| {
+                    let index = index.into_inner().into() as usize;
+                    color_map.get::<Rgb555>(index).unwrap().into()
+                });
+
+                self.draw_colors(target, colors)
+            }
+            ColorType::Rgb888 => {
+                let colors = indices.map(|index| {
+                    let index = index.into_inner().into() as usize;
+                    color_map.get::<Rgb888>(index).unwrap().into()
+                });
+
+                self.draw_colors(target, colors)
+            }
+        }
     }
 }
 
@@ -274,33 +346,65 @@ where
     where
         D: DrawTarget<Color = C>,
     {
-        let raw_pixels = self.raw.pixels();
+        match self.raw.image_data_bpp() {
+            Bpp::Bits8 => {
+                if self.raw.image_type().is_rle() {
+                    let colors = RawColors::<RawU8, Rle>::new(&self.raw);
 
-        // TGA files with the origin in the top left corner can be drawn using `fill_contiguous`.
-        // All other origins are drawn by falling back to `draw_iter`.
-        if self.raw.image_origin() == ImageOrigin::TopLeft {
-            let bounding_box = Rectangle::new(Point::zero(), self.raw.size());
+                    if self.raw.color_map().is_some() {
+                        self.draw_color_mapped(target, colors)
+                    } else {
+                        self.draw_regular::<_, Gray8, _>(target, colors)
+                    }
+                } else {
+                    let colors = RawColors::<RawU8, Uncompressed>::new(&self.raw);
 
-            match self.image_color_type {
-                ColorType::Gray8 => target.fill_contiguous(
-                    &bounding_box,
-                    Pixels::<Gray8, _>::new(raw_pixels).map(|Pixel(_, color)| color),
-                ),
-                ColorType::Rgb555 => target.fill_contiguous(
-                    &bounding_box,
-                    Pixels::<Rgb555, _>::new(raw_pixels).map(|Pixel(_, color)| color),
-                ),
-                ColorType::Rgb888 => target.fill_contiguous(
-                    &bounding_box,
-                    Pixels::<Rgb888, _>::new(raw_pixels).map(|Pixel(_, color)| color),
-                ),
+                    if self.raw.color_map().is_some() {
+                        self.draw_color_mapped(target, colors)
+                    } else {
+                        self.draw_regular::<_, Gray8, _>(target, colors)
+                    }
+                }
             }
-        } else {
-            match self.image_color_type {
-                ColorType::Gray8 => target.draw_iter(Pixels::<Gray8, _>::new(raw_pixels)),
-                ColorType::Rgb555 => target.draw_iter(Pixels::<Rgb555, _>::new(raw_pixels)),
-                ColorType::Rgb888 => target.draw_iter(Pixels::<Rgb888, _>::new(raw_pixels)),
+            Bpp::Bits16 => {
+                if self.raw.image_type().is_rle() {
+                    let colors = RawColors::<RawU16, Rle>::new(&self.raw);
+
+                    if self.raw.color_map().is_some() {
+                        self.draw_color_mapped(target, colors)
+                    } else {
+                        self.draw_regular::<_, Rgb555, _>(target, colors)
+                    }
+                } else {
+                    let colors = RawColors::<RawU16, Uncompressed>::new(&self.raw);
+
+                    if self.raw.color_map().is_some() {
+                        self.draw_color_mapped(target, colors)
+                    } else {
+                        self.draw_regular::<_, Rgb555, _>(target, colors)
+                    }
+                }
             }
+            Bpp::Bits24 => {
+                if self.raw.image_type().is_rle() {
+                    let colors = RawColors::<RawU24, Rle>::new(&self.raw);
+
+                    if self.raw.color_map().is_some() {
+                        self.draw_color_mapped(target, colors)
+                    } else {
+                        self.draw_regular::<_, Rgb888, _>(target, colors)
+                    }
+                } else {
+                    let colors = RawColors::<RawU24, Uncompressed>::new(&self.raw);
+
+                    if self.raw.color_map().is_some() {
+                        self.draw_color_mapped(target, colors)
+                    } else {
+                        self.draw_regular::<_, Rgb888, _>(target, colors)
+                    }
+                }
+            }
+            Bpp::Bits32 => todo!(),
         }
     }
 

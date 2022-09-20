@@ -6,7 +6,7 @@ use crate::{
     footer::TgaFooter,
     header::{Bpp, ImageOrigin, ImageType, TgaHeader},
     parse_error::ParseError,
-    raw_pixels::RawPixels,
+    raw_iter::RawPixels,
 };
 
 /// Raw TGA image.

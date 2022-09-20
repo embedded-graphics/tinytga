@@ -100,18 +100,15 @@ impl ImageType {
 
     /// Returns `true` when the image is RLE encoded.
     pub fn is_rle(self) -> bool {
-        match self {
-            ImageType::RleColorMapped | ImageType::RleTruecolor | ImageType::RleMonochrome => true,
-            _ => false,
-        }
+        matches!(
+            self,
+            ImageType::RleColorMapped | ImageType::RleTruecolor | ImageType::RleMonochrome
+        )
     }
 
     /// Returns `true` when the image is monochrome.
     pub fn is_monochrome(self) -> bool {
-        match self {
-            ImageType::Monochrome | ImageType::RleMonochrome => true,
-            _ => false,
-        }
+        matches!(self, ImageType::Monochrome | ImageType::RleMonochrome)
     }
 }
 
