@@ -13,6 +13,7 @@
 ### Changed
 
 - **(breaking)** [#16](https://github.com/embedded-graphics/tinybmp/pull/16) Use 1.61 as MSRV.
+- **(breaking)** [#16](https://github.com/embedded-graphics/tinybmp/pull/16) Replaced `ImageType` enum with `DataType` and `Compression`.
 
 ## [0.4.1] - 2021-06-16
 

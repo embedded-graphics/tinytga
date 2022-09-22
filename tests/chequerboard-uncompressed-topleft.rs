@@ -1,4 +1,4 @@
-use tinytga::{Bpp, ImageOrigin, ImageType, RawTga, TgaHeader};
+use tinytga::{Bpp, ImageOrigin, DataType, Compression, RawTga, TgaHeader};
 
 #[test]
 fn chequerboard_uncompressed_topleft() {
@@ -18,7 +18,8 @@ fn chequerboard_uncompressed_topleft() {
         TgaHeader {
             id_len: 0,
             has_color_map: false,
-            image_type: ImageType::Monochrome,
+            data_type: DataType::BlackAndWhite,
+            compression: Compression::Uncompressed,
             color_map_start: 0,
             color_map_len: 0,
             color_map_depth: None,

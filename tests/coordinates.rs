@@ -1,5 +1,5 @@
 use embedded_graphics::prelude::*;
-use tinytga::{Bpp, ImageOrigin, ImageType, RawTga, TgaHeader};
+use tinytga::{Bpp, ImageOrigin, DataType, Compression, RawTga, TgaHeader};
 
 #[test]
 fn coordinates() {
@@ -16,7 +16,8 @@ fn coordinates() {
         TgaHeader {
             id_len: 0,
             has_color_map: false,
-            image_type: ImageType::Truecolor,
+            data_type: DataType::TrueColor,
+            compression: Compression::Uncompressed,
             color_map_start: 0,
             color_map_len: 0,
             color_map_depth: None,

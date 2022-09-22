@@ -1,9 +1,10 @@
-use tinytga::{Bpp, ImageOrigin, ImageType, RawTga, TgaHeader};
+use tinytga::{Bpp, Compression, DataType, ImageOrigin, RawTga, TgaHeader};
 
 const HEADER_DEFAULT: TgaHeader = TgaHeader {
     id_len: 0,
     has_color_map: false,
-    image_type: ImageType::Empty,
+    data_type: DataType::NoData,
+    compression: Compression::Uncompressed,
     color_map_start: 0,
     color_map_len: 0,
     color_map_depth: None,
@@ -24,7 +25,7 @@ fn type1_16bpp_bl() {
         tga.header(),
         TgaHeader {
             has_color_map: true,
-            image_type: ImageType::ColorMapped,
+            data_type: DataType::ColorMapped,
             color_map_start: 0,
             color_map_len: 8,
             color_map_depth: Some(Bpp::Bits16),
@@ -46,7 +47,7 @@ fn type1_24bpp_bl() {
         tga.header(),
         TgaHeader {
             has_color_map: true,
-            image_type: ImageType::ColorMapped,
+            data_type: DataType::ColorMapped,
             color_map_start: 0,
             color_map_len: 8,
             color_map_depth: Some(Bpp::Bits24),
@@ -68,7 +69,7 @@ fn type1_16bpp_tl() {
         tga.header(),
         TgaHeader {
             has_color_map: true,
-            image_type: ImageType::ColorMapped,
+            data_type: DataType::ColorMapped,
             color_map_start: 0,
             color_map_len: 8,
             color_map_depth: Some(Bpp::Bits16),
@@ -91,7 +92,7 @@ fn type1_24bpp_tl() {
         tga.header(),
         TgaHeader {
             has_color_map: true,
-            image_type: ImageType::ColorMapped,
+            data_type: DataType::ColorMapped,
             color_map_start: 0,
             color_map_len: 8,
             color_map_depth: Some(Bpp::Bits24),
@@ -113,7 +114,7 @@ fn type2_16bpp_bl() {
     assert_eq!(
         tga.header(),
         TgaHeader {
-            image_type: ImageType::Truecolor,
+            data_type: DataType::TrueColor,
             pixel_depth: Bpp::Bits16,
             ..HEADER_DEFAULT
         }
@@ -132,7 +133,7 @@ fn type2_24bpp_bl() {
     assert_eq!(
         tga.header(),
         TgaHeader {
-            image_type: ImageType::Truecolor,
+            data_type: DataType::TrueColor,
             pixel_depth: Bpp::Bits24,
             ..HEADER_DEFAULT
         }
@@ -151,7 +152,7 @@ fn type2_16bpp_tl() {
     assert_eq!(
         tga.header(),
         TgaHeader {
-            image_type: ImageType::Truecolor,
+            data_type: DataType::TrueColor,
             pixel_depth: Bpp::Bits16,
             image_origin: ImageOrigin::TopLeft,
             ..HEADER_DEFAULT
@@ -171,7 +172,7 @@ fn type2_24bpp_tl() {
     assert_eq!(
         tga.header(),
         TgaHeader {
-            image_type: ImageType::Truecolor,
+            data_type: DataType::TrueColor,
             pixel_depth: Bpp::Bits24,
             image_origin: ImageOrigin::TopLeft,
             ..HEADER_DEFAULT
@@ -191,7 +192,7 @@ fn type3_bl() {
     assert_eq!(
         tga.header(),
         TgaHeader {
-            image_type: ImageType::Monochrome,
+            data_type: DataType::BlackAndWhite,
             ..HEADER_DEFAULT
         }
     );
@@ -209,7 +210,7 @@ fn type3_tl() {
     assert_eq!(
         tga.header(),
         TgaHeader {
-            image_type: ImageType::Monochrome,
+            data_type: DataType::BlackAndWhite,
             image_origin: ImageOrigin::TopLeft,
             ..HEADER_DEFAULT
         }
@@ -229,7 +230,8 @@ fn type9_16bpp() {
         tga.header(),
         TgaHeader {
             has_color_map: true,
-            image_type: ImageType::RleColorMapped,
+            data_type: DataType::ColorMapped,
+            compression: Compression::Rle,
             color_map_start: 0,
             color_map_len: 8,
             color_map_depth: Some(Bpp::Bits16),
@@ -251,7 +253,8 @@ fn type9_24bpp_bl() {
         tga.header(),
         TgaHeader {
             has_color_map: true,
-            image_type: ImageType::RleColorMapped,
+            data_type: DataType::ColorMapped,
+            compression: Compression::Rle,
             color_map_start: 0,
             color_map_len: 8,
             color_map_depth: Some(Bpp::Bits24),
@@ -273,7 +276,8 @@ fn type9_16bpp_tl() {
         tga.header(),
         TgaHeader {
             has_color_map: true,
-            image_type: ImageType::RleColorMapped,
+            data_type: DataType::ColorMapped,
+            compression: Compression::Rle,
             color_map_start: 0,
             color_map_len: 8,
             color_map_depth: Some(Bpp::Bits16),
@@ -296,7 +300,8 @@ fn type9_24bpp_tl() {
         tga.header(),
         TgaHeader {
             has_color_map: true,
-            image_type: ImageType::RleColorMapped,
+            data_type: DataType::ColorMapped,
+            compression: Compression::Rle,
             color_map_start: 0,
             color_map_len: 8,
             color_map_depth: Some(Bpp::Bits24),
@@ -318,7 +323,8 @@ fn type10_16bpp_bl() {
     assert_eq!(
         tga.header(),
         TgaHeader {
-            image_type: ImageType::RleTruecolor,
+            data_type: DataType::TrueColor,
+            compression: Compression::Rle,
             pixel_depth: Bpp::Bits16,
             ..HEADER_DEFAULT
         }
@@ -337,7 +343,8 @@ fn type10_24bpp_bl() {
     assert_eq!(
         tga.header(),
         TgaHeader {
-            image_type: ImageType::RleTruecolor,
+            data_type: DataType::TrueColor,
+            compression: Compression::Rle,
             pixel_depth: Bpp::Bits24,
             ..HEADER_DEFAULT
         }
@@ -356,7 +363,8 @@ fn type10_16bpp_tl() {
     assert_eq!(
         tga.header(),
         TgaHeader {
-            image_type: ImageType::RleTruecolor,
+            data_type: DataType::TrueColor,
+            compression: Compression::Rle,
             pixel_depth: Bpp::Bits16,
             image_origin: ImageOrigin::TopLeft,
             ..HEADER_DEFAULT
@@ -376,7 +384,8 @@ fn type10_24bpp_tl() {
     assert_eq!(
         tga.header(),
         TgaHeader {
-            image_type: ImageType::RleTruecolor,
+            data_type: DataType::TrueColor,
+            compression: Compression::Rle,
             pixel_depth: Bpp::Bits24,
             image_origin: ImageOrigin::TopLeft,
             ..HEADER_DEFAULT
@@ -396,7 +405,8 @@ fn type11_bl() {
     assert_eq!(
         tga.header(),
         TgaHeader {
-            image_type: ImageType::RleMonochrome,
+            data_type: DataType::BlackAndWhite,
+            compression: Compression::Rle,
             ..HEADER_DEFAULT
         }
     );
@@ -414,7 +424,8 @@ fn type11_tl() {
     assert_eq!(
         tga.header(),
         TgaHeader {
-            image_type: ImageType::RleMonochrome,
+            data_type: DataType::BlackAndWhite,
+            compression: Compression::Rle,
             image_origin: ImageOrigin::TopLeft,
             ..HEADER_DEFAULT
         }

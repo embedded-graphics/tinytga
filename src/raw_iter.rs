@@ -5,7 +5,7 @@ use embedded_graphics::{
     prelude::*,
 };
 
-use crate::{raw_tga::RawTga, Bpp};
+use crate::{raw_tga::RawTga, Bpp, Compression};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Uncompressed {}
@@ -171,15 +171,23 @@ pub struct RawPixels<'a> {
 
 impl<'a> RawPixels<'a> {
     pub(crate) fn new(raw_tga: &'a RawTga<'a>) -> Self {
-        let colors = match (raw_tga.image_data_bpp(), raw_tga.image_type().is_rle()) {
-            (Bpp::Bits8, false) => DynamicRawColors::Bpp8Uncompressed(RawColors::new(raw_tga)),
-            (Bpp::Bits8, true) => DynamicRawColors::Bpp8Rle(RawColors::new(raw_tga)),
-            (Bpp::Bits16, false) => DynamicRawColors::Bpp16Uncompressed(RawColors::new(raw_tga)),
-            (Bpp::Bits16, true) => DynamicRawColors::Bpp16Rle(RawColors::new(raw_tga)),
-            (Bpp::Bits24, false) => DynamicRawColors::Bpp24Uncompressed(RawColors::new(raw_tga)),
-            (Bpp::Bits24, true) => DynamicRawColors::Bpp24Rle(RawColors::new(raw_tga)),
-            (Bpp::Bits32, false) => DynamicRawColors::Bpp32Uncompressed(RawColors::new(raw_tga)),
-            (Bpp::Bits32, true) => DynamicRawColors::Bpp32Rle(RawColors::new(raw_tga)),
+        let colors = match (raw_tga.image_data_bpp(), raw_tga.compression()) {
+            (Bpp::Bits8, Compression::Uncompressed) => {
+                DynamicRawColors::Bpp8Uncompressed(RawColors::new(raw_tga))
+            }
+            (Bpp::Bits8, Compression::Rle) => DynamicRawColors::Bpp8Rle(RawColors::new(raw_tga)),
+            (Bpp::Bits16, Compression::Uncompressed) => {
+                DynamicRawColors::Bpp16Uncompressed(RawColors::new(raw_tga))
+            }
+            (Bpp::Bits16, Compression::Rle) => DynamicRawColors::Bpp16Rle(RawColors::new(raw_tga)),
+            (Bpp::Bits24, Compression::Uncompressed) => {
+                DynamicRawColors::Bpp24Uncompressed(RawColors::new(raw_tga))
+            }
+            (Bpp::Bits24, Compression::Rle) => DynamicRawColors::Bpp24Rle(RawColors::new(raw_tga)),
+            (Bpp::Bits32, Compression::Uncompressed) => {
+                DynamicRawColors::Bpp32Uncompressed(RawColors::new(raw_tga))
+            }
+            (Bpp::Bits32, Compression::Rle) => DynamicRawColors::Bpp32Rle(RawColors::new(raw_tga)),
         };
 
         let start_y = if raw_tga.image_origin().is_bottom() {

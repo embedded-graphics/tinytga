@@ -3,7 +3,7 @@ use embedded_graphics::{
     pixelcolor::{Gray8, Rgb555, Rgb888},
     prelude::*,
 };
-use tinytga::{Bpp, ImageOrigin, ImageType, Tga};
+use tinytga::{Bpp, ImageOrigin, DataType, Compression, Tga};
 
 const WIDTH: usize = 240;
 const HEIGHT: usize = 320;
@@ -103,14 +103,16 @@ fn expected_gray8() -> Framebuffer<Gray8> {
 #[track_caller]
 fn assert_format<C>(
     tga: &Tga<C>,
-    image_type: ImageType,
+    data_type: DataType,
+    compression: Compression,
     pixel_depth: Bpp,
     image_origin: ImageOrigin,
     color_map_depth: Option<Bpp>,
 ) where
     C: PixelColor + From<Rgb888> + From<Rgb555> + From<Gray8>,
 {
-    assert_eq!(tga.as_raw().header().image_type, image_type);
+    assert_eq!(tga.as_raw().header().data_type, data_type);
+    assert_eq!(tga.as_raw().header().compression, compression);
     assert_eq!(tga.as_raw().header().pixel_depth, pixel_depth);
     assert_eq!(tga.as_raw().header().image_origin, image_origin);
 
@@ -128,7 +130,8 @@ fn logo_type1_16bpp_tl() {
     let tga = Tga::<Rgb555>::from_slice(include_bytes!("logo_type1_16bpp_tl.tga")).unwrap();
     assert_format(
         &tga,
-        ImageType::ColorMapped,
+        DataType::ColorMapped,
+        Compression::Uncompressed,
         Bpp::Bits8,
         ImageOrigin::TopLeft,
         Some(Bpp::Bits16),
@@ -142,7 +145,8 @@ fn logo_type1_16bpp_bl() {
     let tga = Tga::<Rgb555>::from_slice(include_bytes!("logo_type1_16bpp_bl.tga")).unwrap();
     assert_format(
         &tga,
-        ImageType::ColorMapped,
+        DataType::ColorMapped,
+        Compression::Uncompressed,
         Bpp::Bits8,
         ImageOrigin::BottomLeft,
         Some(Bpp::Bits16),
@@ -156,7 +160,8 @@ fn logo_type1_24bpp_tl() {
     let tga = Tga::<Rgb888>::from_slice(include_bytes!("logo_type1_24bpp_tl.tga")).unwrap();
     assert_format(
         &tga,
-        ImageType::ColorMapped,
+        DataType::ColorMapped,
+        Compression::Uncompressed,
         Bpp::Bits8,
         ImageOrigin::TopLeft,
         Some(Bpp::Bits24),
@@ -170,7 +175,8 @@ fn logo_type1_24bpp_bl() {
     let tga = Tga::<Rgb888>::from_slice(include_bytes!("logo_type1_24bpp_bl.tga")).unwrap();
     assert_format(
         &tga,
-        ImageType::ColorMapped,
+        DataType::ColorMapped,
+        Compression::Uncompressed,
         Bpp::Bits8,
         ImageOrigin::BottomLeft,
         Some(Bpp::Bits24),
@@ -184,7 +190,8 @@ fn logo_type2_16bpp_tl() {
     let tga = Tga::<Rgb555>::from_slice(include_bytes!("logo_type2_16bpp_tl.tga")).unwrap();
     assert_format(
         &tga,
-        ImageType::Truecolor,
+        DataType::TrueColor,
+        Compression::Uncompressed,
         Bpp::Bits16,
         ImageOrigin::TopLeft,
         None,
@@ -198,7 +205,8 @@ fn logo_type2_16bpp_bl() {
     let tga = Tga::<Rgb555>::from_slice(include_bytes!("logo_type2_16bpp_bl.tga")).unwrap();
     assert_format(
         &tga,
-        ImageType::Truecolor,
+        DataType::TrueColor,
+        Compression::Uncompressed,
         Bpp::Bits16,
         ImageOrigin::BottomLeft,
         None,
@@ -212,7 +220,8 @@ fn logo_type2_24bpp_tl() {
     let tga = Tga::<Rgb888>::from_slice(include_bytes!("logo_type2_24bpp_tl.tga")).unwrap();
     assert_format(
         &tga,
-        ImageType::Truecolor,
+        DataType::TrueColor,
+        Compression::Uncompressed,
         Bpp::Bits24,
         ImageOrigin::TopLeft,
         None,
@@ -226,7 +235,8 @@ fn logo_type2_24bpp_bl() {
     let tga = Tga::<Rgb888>::from_slice(include_bytes!("logo_type2_24bpp_bl.tga")).unwrap();
     assert_format(
         &tga,
-        ImageType::Truecolor,
+        DataType::TrueColor,
+        Compression::Uncompressed,
         Bpp::Bits24,
         ImageOrigin::BottomLeft,
         None,
@@ -240,7 +250,8 @@ fn logo_type3_tl() {
     let tga = Tga::<Gray8>::from_slice(include_bytes!("logo_type3_tl.tga")).unwrap();
     assert_format(
         &tga,
-        ImageType::Monochrome,
+        DataType::BlackAndWhite,
+        Compression::Uncompressed,
         Bpp::Bits8,
         ImageOrigin::TopLeft,
         None,
@@ -254,7 +265,8 @@ fn logo_type3_bl() {
     let tga = Tga::<Gray8>::from_slice(include_bytes!("logo_type3_bl.tga")).unwrap();
     assert_format(
         &tga,
-        ImageType::Monochrome,
+        DataType::BlackAndWhite,
+        Compression::Uncompressed,
         Bpp::Bits8,
         ImageOrigin::BottomLeft,
         None,
@@ -268,7 +280,8 @@ fn logo_type9_16bpp_tl() {
     let tga = Tga::<Rgb555>::from_slice(include_bytes!("logo_type9_16bpp_tl.tga")).unwrap();
     assert_format(
         &tga,
-        ImageType::RleColorMapped,
+        DataType::ColorMapped,
+        Compression::Rle,
         Bpp::Bits8,
         ImageOrigin::TopLeft,
         Some(Bpp::Bits16),
@@ -282,7 +295,8 @@ fn logo_type9_16bpp_bl() {
     let tga = Tga::<Rgb555>::from_slice(include_bytes!("logo_type9_16bpp_bl.tga")).unwrap();
     assert_format(
         &tga,
-        ImageType::RleColorMapped,
+        DataType::ColorMapped,
+        Compression::Rle,
         Bpp::Bits8,
         ImageOrigin::BottomLeft,
         Some(Bpp::Bits16),
@@ -296,7 +310,8 @@ fn logo_type9_24bpp_tl() {
     let tga = Tga::<Rgb888>::from_slice(include_bytes!("logo_type9_24bpp_tl.tga")).unwrap();
     assert_format(
         &tga,
-        ImageType::RleColorMapped,
+        DataType::ColorMapped,
+        Compression::Rle,
         Bpp::Bits8,
         ImageOrigin::TopLeft,
         Some(Bpp::Bits24),
@@ -310,7 +325,8 @@ fn logo_type9_24bpp_bl() {
     let tga = Tga::<Rgb888>::from_slice(include_bytes!("logo_type9_24bpp_bl.tga")).unwrap();
     assert_format(
         &tga,
-        ImageType::RleColorMapped,
+        DataType::ColorMapped,
+        Compression::Rle,
         Bpp::Bits8,
         ImageOrigin::BottomLeft,
         Some(Bpp::Bits24),
@@ -324,7 +340,8 @@ fn logo_type10_16bpp_tl() {
     let tga = Tga::<Rgb555>::from_slice(include_bytes!("logo_type10_16bpp_tl.tga")).unwrap();
     assert_format(
         &tga,
-        ImageType::RleTruecolor,
+        DataType::TrueColor,
+        Compression::Rle,
         Bpp::Bits16,
         ImageOrigin::TopLeft,
         None,
@@ -338,7 +355,8 @@ fn logo_type10_16bpp_bl() {
     let tga = Tga::<Rgb555>::from_slice(include_bytes!("logo_type10_16bpp_bl.tga")).unwrap();
     assert_format(
         &tga,
-        ImageType::RleTruecolor,
+        DataType::TrueColor,
+        Compression::Rle,
         Bpp::Bits16,
         ImageOrigin::BottomLeft,
         None,
@@ -352,7 +370,8 @@ fn logo_type10_24bpp_tl() {
     let tga = Tga::<Rgb888>::from_slice(include_bytes!("logo_type10_24bpp_tl.tga")).unwrap();
     assert_format(
         &tga,
-        ImageType::RleTruecolor,
+        DataType::TrueColor,
+        Compression::Rle,
         Bpp::Bits24,
         ImageOrigin::TopLeft,
         None,
@@ -366,7 +385,8 @@ fn logo_type10_24bpp_bl() {
     let tga = Tga::<Rgb888>::from_slice(include_bytes!("logo_type10_24bpp_bl.tga")).unwrap();
     assert_format(
         &tga,
-        ImageType::RleTruecolor,
+        DataType::TrueColor,
+        Compression::Rle,
         Bpp::Bits24,
         ImageOrigin::BottomLeft,
         None,
@@ -380,7 +400,8 @@ fn logo_type11_tl() {
     let tga = Tga::<Gray8>::from_slice(include_bytes!("logo_type11_tl.tga")).unwrap();
     assert_format(
         &tga,
-        ImageType::RleMonochrome,
+        DataType::BlackAndWhite,
+        Compression::Rle,
         Bpp::Bits8,
         ImageOrigin::TopLeft,
         None,
@@ -394,7 +415,8 @@ fn logo_type11_bl() {
     let tga = Tga::<Gray8>::from_slice(include_bytes!("logo_type11_bl.tga")).unwrap();
     assert_format(
         &tga,
-        ImageType::RleMonochrome,
+        DataType::BlackAndWhite,
+        Compression::Rle,
         Bpp::Bits8,
         ImageOrigin::BottomLeft,
         None,

@@ -4,9 +4,10 @@ use nom::{bytes::complete::take, IResult};
 use crate::{
     color_map::ColorMap,
     footer::TgaFooter,
-    header::{Bpp, ImageOrigin, ImageType, TgaHeader},
+    header::{Bpp, ImageOrigin, TgaHeader},
     parse_error::ParseError,
     raw_iter::RawPixels,
+    Compression, DataType,
 };
 
 /// Raw TGA image.
@@ -32,8 +33,11 @@ pub struct RawTga<'a> {
     /// Image size
     size: Size,
 
-    /// Image type
-    image_type: ImageType,
+    /// Data type
+    data_type: DataType,
+
+    /// Compression
+    compression: Compression,
 
     /// Bits per pixel
     bpp: Bpp,
@@ -64,7 +68,8 @@ impl<'a> RawTga<'a> {
             size,
             bpp: header.pixel_depth,
             image_origin: header.image_origin,
-            image_type: header.image_type,
+            data_type: header.data_type,
+            compression: header.compression,
         })
     }
 
@@ -100,9 +105,14 @@ impl<'a> RawTga<'a> {
         self.image_origin
     }
 
-    /// Returns the image type.
-    pub fn image_type(&self) -> ImageType {
-        self.image_type
+    /// Returns the data type.
+    pub fn data_type(&self) -> DataType {
+        self.data_type
+    }
+
+    /// Returns the compression type.
+    pub fn compression(&self) -> Compression {
+        self.compression
     }
 
     /// Returns the raw image data contained in this image.

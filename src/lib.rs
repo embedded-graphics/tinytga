@@ -40,7 +40,7 @@
 //!
 //! ```rust
 //! use embedded_graphics::{prelude::*, pixelcolor::Rgb888};
-//! use tinytga::{Bpp, ImageOrigin, ImageType, RawPixel, Tga, TgaHeader};
+//! use tinytga::Tga;
 //!
 //! // Include an image from a local path as bytes
 //! let data = include_bytes!("../tests/chessboard_4px_rle.tga");
@@ -64,7 +64,7 @@
 //!
 //! ```rust
 //! use embedded_graphics::{prelude::*, pixelcolor::Rgb888};
-//! use tinytga::{Bpp, ImageOrigin, ImageType, RawPixel, RawTga, TgaHeader};
+//! use tinytga::{Bpp, Compression, DataType, ImageOrigin, RawPixel, RawTga, TgaHeader};
 //!
 //! // Include an image from a local path as bytes.
 //! let data = include_bytes!("../tests/chessboard_4px_rle.tga");
@@ -78,7 +78,8 @@
 //!     TgaHeader {
 //!         id_len: 0,
 //!         has_color_map: false,
-//!         image_type: ImageType::RleTruecolor,
+//!         data_type: DataType::TrueColor,
+//!         compression: Compression::Rle,
 //!         color_map_start: 0,
 //!         color_map_len: 0,
 //!         color_map_depth: None,
@@ -150,7 +151,7 @@ use raw_iter::{RawColors, Rle, Uncompressed};
 
 pub use crate::{
     color_map::ColorMap,
-    header::{Bpp, ImageOrigin, ImageType, TgaHeader},
+    header::{Bpp, Compression, DataType, ImageOrigin, TgaHeader},
     parse_error::ParseError,
     pixels::Pixels,
     raw_iter::{RawPixel, RawPixels},
@@ -177,13 +178,15 @@ where
     pub fn from_slice(data: &'a [u8]) -> Result<Self, ParseError> {
         let raw = RawTga::from_slice(data)?;
 
-        let image_color_type = match (raw.color_bpp(), raw.image_type().is_monochrome()) {
-            (Bpp::Bits8, true) => ColorType::Gray8,
-            (Bpp::Bits16, false) => ColorType::Rgb555,
-            (Bpp::Bits24, false) => ColorType::Rgb888,
+        let image_color_type = match (raw.color_bpp(), raw.data_type()) {
+            (Bpp::Bits8, DataType::BlackAndWhite) => ColorType::Gray8,
+            (Bpp::Bits16, DataType::ColorMapped) => ColorType::Rgb555,
+            (Bpp::Bits16, DataType::TrueColor) => ColorType::Rgb555,
+            (Bpp::Bits24, DataType::ColorMapped) => ColorType::Rgb888,
+            (Bpp::Bits24, DataType::TrueColor) => ColorType::Rgb888,
             _ => {
                 return Err(ParseError::UnsupportedTgaType(
-                    raw.image_type(),
+                    raw.data_type(),
                     raw.color_bpp(),
                 ));
             }
@@ -278,15 +281,6 @@ where
         };
 
         match self.image_color_type {
-            ColorType::Gray8 => {
-                //TODO: add test for this image color type
-                let colors = indices.map(|index| {
-                    let index = index.into_inner().into() as usize;
-                    color_map.get::<Gray8>(index).unwrap().into()
-                });
-
-                self.draw_colors(target, colors)
-            }
             ColorType::Rgb555 => {
                 let colors = indices.map(|index| {
                     let index = index.into_inner().into() as usize;
@@ -303,6 +297,9 @@ where
 
                 self.draw_colors(target, colors)
             }
+            // Color mapped Gray8 images aren't supported.  Using a color map for Gray8 images
+            // doesn't make sense, because this encoding will always be larger than a type 3 image.
+            ColorType::Gray8 => Ok(()),
         }
     }
 }
@@ -324,16 +321,8 @@ where
         D: DrawTarget<Color = C>,
     {
         match self.raw.image_data_bpp() {
-            Bpp::Bits8 => {
-                if self.raw.image_type().is_rle() {
-                    let colors = RawColors::<RawU8, Rle>::new(&self.raw);
-
-                    if self.raw.color_map().is_some() {
-                        self.draw_color_mapped(target, colors)
-                    } else {
-                        self.draw_regular::<_, Gray8, _>(target, colors)
-                    }
-                } else {
+            Bpp::Bits8 => match self.raw.compression() {
+                Compression::Uncompressed => {
                     let colors = RawColors::<RawU8, Uncompressed>::new(&self.raw);
 
                     if self.raw.color_map().is_some() {
@@ -342,17 +331,18 @@ where
                         self.draw_regular::<_, Gray8, _>(target, colors)
                     }
                 }
-            }
-            Bpp::Bits16 => {
-                if self.raw.image_type().is_rle() {
-                    let colors = RawColors::<RawU16, Rle>::new(&self.raw);
+                Compression::Rle => {
+                    let colors = RawColors::<RawU8, Rle>::new(&self.raw);
 
                     if self.raw.color_map().is_some() {
                         self.draw_color_mapped(target, colors)
                     } else {
-                        self.draw_regular::<_, Rgb555, _>(target, colors)
+                        self.draw_regular::<_, Gray8, _>(target, colors)
                     }
-                } else {
+                }
+            },
+            Bpp::Bits16 => match self.raw.compression() {
+                Compression::Uncompressed => {
                     let colors = RawColors::<RawU16, Uncompressed>::new(&self.raw);
 
                     if self.raw.color_map().is_some() {
@@ -361,17 +351,18 @@ where
                         self.draw_regular::<_, Rgb555, _>(target, colors)
                     }
                 }
-            }
-            Bpp::Bits24 => {
-                if self.raw.image_type().is_rle() {
-                    let colors = RawColors::<RawU24, Rle>::new(&self.raw);
+                Compression::Rle => {
+                    let colors = RawColors::<RawU16, Rle>::new(&self.raw);
 
                     if self.raw.color_map().is_some() {
                         self.draw_color_mapped(target, colors)
                     } else {
-                        self.draw_regular::<_, Rgb888, _>(target, colors)
+                        self.draw_regular::<_, Rgb555, _>(target, colors)
                     }
-                } else {
+                }
+            },
+            Bpp::Bits24 => match self.raw.compression() {
+                Compression::Uncompressed => {
                     let colors = RawColors::<RawU24, Uncompressed>::new(&self.raw);
 
                     if self.raw.color_map().is_some() {
@@ -380,7 +371,16 @@ where
                         self.draw_regular::<_, Rgb888, _>(target, colors)
                     }
                 }
-            }
+                Compression::Rle => {
+                    let colors = RawColors::<RawU24, Rle>::new(&self.raw);
+
+                    if self.raw.color_map().is_some() {
+                        self.draw_color_mapped(target, colors)
+                    } else {
+                        self.draw_regular::<_, Rgb888, _>(target, colors)
+                    }
+                }
+            },
             Bpp::Bits32 => todo!(),
         }
     }

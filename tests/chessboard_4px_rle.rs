@@ -1,4 +1,4 @@
-use tinytga::{Bpp, ImageOrigin, ImageType, RawTga, TgaHeader};
+use tinytga::{Bpp, ImageOrigin, DataType, Compression, RawTga, TgaHeader};
 
 #[test]
 fn chessboard_4px_rle() {
@@ -15,7 +15,8 @@ fn chessboard_4px_rle() {
         TgaHeader {
             id_len: 0,
             has_color_map: false,
-            image_type: ImageType::RleTruecolor,
+            data_type: DataType::TrueColor,
+            compression: Compression::Rle,
             color_map_start: 0,
             color_map_len: 0,
             color_map_depth: None,

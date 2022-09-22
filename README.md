@@ -46,7 +46,7 @@ If [embedded-graphics] is not used to draw the TGA image, the color types provid
 
 ```rust
 use embedded_graphics::{prelude::*, pixelcolor::Rgb888};
-use tinytga::{Bpp, ImageOrigin, ImageType, RawPixel, Tga, TgaHeader};
+use tinytga::Tga;
 
 // Include an image from a local path as bytes
 let data = include_bytes!("../tests/chessboard_4px_rle.tga");
@@ -70,7 +70,7 @@ accessed with the `pixels` method on
 
 ```rust
 use embedded_graphics::{prelude::*, pixelcolor::Rgb888};
-use tinytga::{Bpp, ImageOrigin, ImageType, RawPixel, RawTga, TgaHeader};
+use tinytga::{Bpp, Compression, DataType, ImageOrigin, RawPixel, RawTga, TgaHeader};
 
 // Include an image from a local path as bytes.
 let data = include_bytes!("../tests/chessboard_4px_rle.tga");
@@ -84,7 +84,8 @@ assert_eq!(
     TgaHeader {
         id_len: 0,
         has_color_map: false,
-        image_type: ImageType::RleTruecolor,
+        data_type: DataType::TrueColor,
+        compression: Compression::Rle,
         color_map_start: 0,
         color_map_len: 0,
         color_map_depth: None,

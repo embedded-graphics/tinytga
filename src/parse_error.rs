@@ -1,4 +1,4 @@
-use crate::header::{Bpp, ImageType};
+use crate::header::{Bpp, DataType};
 
 /// Possible parse errors
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
@@ -28,5 +28,5 @@ pub enum ParseError {
     MismatchedBpp(u8),
 
     /// Unsupported combination of image type and bits per pixel.
-    UnsupportedTgaType(ImageType, Bpp),
+    UnsupportedTgaType(DataType, Bpp),
 }
