@@ -127,10 +127,7 @@ impl ImageOrigin {
     }
 
     pub(crate) fn is_bottom(self) -> bool {
-        match self {
-            Self::BottomLeft | Self::BottomRight => true,
-            _ => false,
-        }
+        matches!(self, Self::BottomLeft | Self::BottomRight)
     }
 }
 
