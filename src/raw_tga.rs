@@ -137,7 +137,7 @@ impl<'a> RawTga<'a> {
     }
 
     /// Returns an iterator over the raw pixels in this image.
-    pub fn pixels(&'a self) -> RawPixels<'a> {
+    pub fn pixels(&self) -> RawPixels<'_> {
         RawPixels::new(self)
     }
 
@@ -161,7 +161,7 @@ impl<'a> RawTga<'a> {
     /// # Performance
     ///
     /// To save memory the footer is parsed every time this method is called.
-    pub fn developer_directory(&self) -> Option<&[u8]> {
+    pub fn developer_directory(&self) -> Option<&'a [u8]> {
         TgaFooter::parse(self.data).and_then(|footer| footer.developer_directory(self.data))
     }
 
@@ -170,7 +170,7 @@ impl<'a> RawTga<'a> {
     /// # Performance
     ///
     /// To save memory the footer is parsed every time this method is called.
-    pub fn extension_area(&self) -> Option<&[u8]> {
+    pub fn extension_area(&self) -> Option<&'a [u8]> {
         TgaFooter::parse(self.data).and_then(|footer| footer.extension_area(self.data))
     }
 
@@ -181,7 +181,7 @@ impl<'a> RawTga<'a> {
     /// # Performance
     ///
     /// To save memory the header is parsed every time this method is called.
-    pub fn image_id(&self) -> Option<&[u8]> {
+    pub fn image_id(&self) -> Option<&'a [u8]> {
         let (input, header) = TgaHeader::parse(self.data).ok()?;
 
         parse_image_id(input, &header)

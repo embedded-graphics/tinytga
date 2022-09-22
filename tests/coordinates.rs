@@ -1,5 +1,5 @@
 use embedded_graphics::prelude::*;
-use tinytga::{Bpp, ImageOrigin, DataType, Compression, RawTga, TgaHeader};
+use tinytga::{Bpp, Compression, DataType, ImageOrigin, RawTga, TgaHeader};
 
 #[test]
 fn coordinates() {

@@ -3,7 +3,7 @@ use embedded_graphics::{
     pixelcolor::{Gray8, Rgb555, Rgb888},
     prelude::*,
 };
-use tinytga::{Bpp, ImageOrigin, DataType, Compression, Tga};
+use tinytga::{Bpp, Compression, DataType, ImageOrigin, Tga};
 
 const WIDTH: usize = 240;
 const HEIGHT: usize = 320;
