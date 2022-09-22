@@ -60,38 +60,43 @@ impl<'a, F> NextColor<RawU8> for RawColors<'a, RawU8, F> {
 
 impl<'a, F> NextColor<RawU16> for RawColors<'a, RawU16, F> {
     fn next_color(&mut self) -> Option<RawU16> {
-        self.remaining_data.get(0..2).map(|bytes| {
-            let bytes: [u8; 2] = bytes.try_into().unwrap();
+        if self.remaining_data.len() < 2 {
+            return None;
+        }
 
-            self.remaining_data = &self.remaining_data[2..];
+        let (bytes, rest) = self.remaining_data.split_at(2);
+        self.remaining_data = rest;
 
-            RawU16::new(u16::from_le_bytes(bytes))
-        })
+        Some(RawU16::new(u16::from_le_bytes(bytes.try_into().unwrap())))
     }
 }
 
 impl<'a, F> NextColor<RawU24> for RawColors<'a, RawU24, F> {
     fn next_color(&mut self) -> Option<RawU24> {
-        self.remaining_data.get(0..3).map(|bytes| {
-            let mut bytes2 = [0u8; 4];
-            bytes2[0..3].copy_from_slice(bytes);
+        if self.remaining_data.len() < 3 {
+            return None;
+        }
 
-            self.remaining_data = &self.remaining_data[3..];
+        let (bytes, rest) = self.remaining_data.split_at(3);
+        self.remaining_data = rest;
 
-            RawU24::new(u32::from_le_bytes(bytes2))
-        })
+        let mut bytes_padded = [0u8; 4];
+        bytes_padded[0..3].copy_from_slice(bytes);
+
+        Some(RawU24::new(u32::from_le_bytes(bytes_padded)))
     }
 }
 
 impl<'a, F> NextColor<RawU32> for RawColors<'a, RawU32, F> {
     fn next_color(&mut self) -> Option<RawU32> {
-        self.remaining_data.get(0..4).map(|bytes| {
-            let bytes: [u8; 4] = bytes.try_into().unwrap();
+        if self.remaining_data.len() < 4 {
+            return None;
+        }
 
-            self.remaining_data = &self.remaining_data[4..];
+        let (bytes, rest) = self.remaining_data.split_at(4);
+        self.remaining_data = rest;
 
-            RawU32::new(u32::from_le_bytes(bytes))
-        })
+        Some(RawU32::new(u32::from_le_bytes(bytes.try_into().unwrap())))
     }
 }
 

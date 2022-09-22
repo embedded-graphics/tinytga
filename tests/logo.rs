@@ -246,6 +246,36 @@ fn logo_type2_24bpp_bl() {
 }
 
 #[test]
+fn logo_type2_24bpp_tr() {
+    let tga = Tga::<Rgb888>::from_slice(include_bytes!("logo_type2_24bpp_tr.tga")).unwrap();
+    assert_format(
+        &tga,
+        DataType::TrueColor,
+        Compression::Uncompressed,
+        Bpp::Bits24,
+        ImageOrigin::TopRight,
+        None,
+    );
+
+    Framebuffer::from_image(tga).assert_eq(&expected_rgb888());
+}
+
+#[test]
+fn logo_type2_24bpp_br() {
+    let tga = Tga::<Rgb888>::from_slice(include_bytes!("logo_type2_24bpp_br.tga")).unwrap();
+    assert_format(
+        &tga,
+        DataType::TrueColor,
+        Compression::Uncompressed,
+        Bpp::Bits24,
+        ImageOrigin::BottomRight,
+        None,
+    );
+
+    Framebuffer::from_image(tga).assert_eq(&expected_rgb888());
+}
+
+#[test]
 fn logo_type3_tl() {
     let tga = Tga::<Gray8>::from_slice(include_bytes!("logo_type3_tl.tga")).unwrap();
     assert_format(

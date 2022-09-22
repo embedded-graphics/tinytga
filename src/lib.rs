@@ -11,10 +11,6 @@
 //!
 //! This example demonstrates how a TGA image can be drawn to a [embedded-graphics] draw target.
 //!
-//! The code uses the [`Tga`] struct and only works if the color format inside the TGA file is known
-//! at compile time. While this makes the code less flexible it offers the best performance by
-//! making sure that no unnecessary color conversions are used.
-//!
 //! ```rust
 //! # fn main() -> Result<(), core::convert::Infallible> {
 //! # let mut display = embedded_graphics::mock_display::MockDisplay::default();
@@ -99,9 +95,6 @@
 //!
 //! # Embedded-graphics drawing performance
 //!
-//! [`Tga`] should by used instead of [`DynamicTga`] when possible to reduce the risk of
-//! accidentally adding unnecessary color conversions.
-//!
 //! `tinytga` uses different code paths to draw images with different [`ImageOrigin`]s.
 //! The performance difference between the origins will depend on the display driver, but using
 //! images with the origin at the top left corner will generally result in the best performance.
@@ -115,9 +108,6 @@
 //! [embedded-graphics]: https://docs.rs/embedded-graphics
 //! [`Tga`]: ./struct.Tga.html
 //! [`RawTga`]: ./struct.RawTga.html
-//! [`DynamicTga`]: ./struct.DynamicTga.html
-//! [`image_type`]: ./struct.TgaHeader.html#structfield.image_type
-//! [`pixel_data`]: ./struct.Tga.html#structfield.pixel_data
 
 #![no_std]
 #![deny(missing_docs)]
@@ -244,9 +234,24 @@ where
 
                 Ok(())
             }
-            // TODO: handle top right and bottom right origins (with test)
-            ImageOrigin::TopRight => todo!(),
-            ImageOrigin::BottomRight => todo!(),
+            ImageOrigin::TopRight => {
+                let max_x = bounding_box.bottom_right().map(|p| p.x).unwrap_or_default();
+
+                bounding_box
+                    .points()
+                    .zip(colors)
+                    .map(|(p, c)| Pixel(Point::new(max_x - p.x, p.y), c))
+                    .draw(target)
+            }
+            ImageOrigin::BottomRight => {
+                let bottom_right = bounding_box.bottom_right().unwrap_or_default();
+
+                bounding_box
+                    .points()
+                    .zip(colors)
+                    .map(|(p, c)| Pixel(bottom_right - p, c))
+                    .draw(target)
+            }
         }
     }
 
@@ -381,7 +386,7 @@ where
                     }
                 }
             },
-            Bpp::Bits32 => todo!(),
+            Bpp::Bits32 => Ok(())
         }
     }
 
