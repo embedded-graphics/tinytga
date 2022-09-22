@@ -386,7 +386,7 @@ where
                     }
                 }
             },
-            Bpp::Bits32 => Ok(())
+            Bpp::Bits32 => Ok(()),
         }
     }
 

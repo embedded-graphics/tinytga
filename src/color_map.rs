@@ -76,7 +76,6 @@ impl<'a> ColorMap<'a> {
         })
     }
 
-    //TODO: make public? If `C`'s BPP doesn't match this will return invalid values.
     pub(crate) fn get<C>(&self, index: usize) -> Option<C>
     where
         C: PixelColor + From<C::Raw>,

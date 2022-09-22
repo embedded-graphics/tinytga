@@ -9,11 +9,19 @@
 ### Added
 
 - [#16](https://github.com/embedded-graphics/tinybmp/pull/16) Added `display` example to display TGA images using the embedded-graphics simulator.
+- [#16](https://github.com/embedded-graphics/tinybmp/pull/16) Added support for bottom right and top right image origins.
 
 ### Changed
 
 - **(breaking)** [#16](https://github.com/embedded-graphics/tinybmp/pull/16) Use 1.61 as MSRV.
 - **(breaking)** [#16](https://github.com/embedded-graphics/tinybmp/pull/16) Replaced `ImageType` enum with `DataType` and `Compression`.
+- **(breaking)** [#16](https://github.com/embedded-graphics/tinybmp/pull/16) Color types used with `Tga` are now required to implement `From<Gray8> + From<Rgb555> + From<Rgb888>`.
+- [#16](https://github.com/embedded-graphics/tinybmp/pull/16) Improved drawing performance for bottom left origin images by using `fill_contiguous`.
+- [#16](https://github.com/embedded-graphics/tinybmp/pull/16) Use correct lifetimes for `RawTga::image_id`, `RawTga::developer_dictionary` and `RawTga::extension_area`.
+
+### Removed
+
+- **(breaking)** [#16](https://github.com/embedded-graphics/tinybmp/pull/16) Removed `DynamicTga`, use `Tga` instead.
 
 ## [0.4.1] - 2021-06-16
 

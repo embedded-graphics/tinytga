@@ -20,10 +20,6 @@ the TGA file. But it is also possible to directly access the raw pixel represent
 
 This example demonstrates how a TGA image can be drawn to a [embedded-graphics] draw target.
 
-The code uses the `Tga` struct and only works if the color format inside the TGA file is known
-at compile time. While this makes the code less flexible it offers the best performance by
-making sure that no unnecessary color conversions are used.
-
 ```rust
 use embedded_graphics::{image::Image, pixelcolor::Rgb888, prelude::*};
 use tinytga::Tga;
@@ -104,9 +100,6 @@ let pixels: Vec<_> = img.pixels().collect();
 ```
 
 ## Embedded-graphics drawing performance
-
-`Tga` should by used instead of `DynamicTga` when possible to reduce the risk of
-accidentally adding unnecessary color conversions.
 
 `tinytga` uses different code paths to draw images with different `ImageOrigin`s.
 The performance difference between the origins will depend on the display driver, but using
