@@ -3,7 +3,7 @@ name = "tinytga"
 version = "0.4.1"
 description = "No-std, low memory footprint TGA image loader"
 authors = ["James Waples <james@wapl.es>", "Ralf Fuest <mail@rfuest.de>"]
-edition = "2018"
+edition = "2021"
 repository = "https://github.com/embedded-graphics/tinytga"
 documentation = "https://docs.rs/tinytga"
 categories = ["embedded", "no-std", "multimedia::images"]
@@ -25,7 +25,7 @@ harness = false
 
 [dependencies]
 embedded-graphics = "0.7.1"
-nom = { version = "6.0.1", default-features = false }
+nom = { version = "7.1.1", default-features = false }
 
 [dev-dependencies]
 paste = "1.0"
