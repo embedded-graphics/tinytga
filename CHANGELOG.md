@@ -8,7 +8,6 @@
 
 ### Added
 
-- [#16](https://github.com/embedded-graphics/tinybmp/pull/16) Added `display` example to display TGA images using the embedded-graphics simulator.
 - [#16](https://github.com/embedded-graphics/tinybmp/pull/16) Added support for bottom right and top right image origins.
 
 ### Changed
