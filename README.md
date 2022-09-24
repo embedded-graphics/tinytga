@@ -20,10 +20,6 @@ the TGA file. But it is also possible to directly access the raw pixel represent
 
 This example demonstrates how a TGA image can be drawn to a [embedded-graphics] draw target.
 
-The code uses the `Tga` struct and only works if the color format inside the TGA file is known
-at compile time. While this makes the code less flexible it offers the best performance by
-making sure that no unnecessary color conversions are used.
-
 ```rust
 use embedded_graphics::{image::Image, pixelcolor::Rgb888, prelude::*};
 use tinytga::Tga;
@@ -38,26 +34,6 @@ let image = Image::new(&tga, Point::zero());
 image.draw(&mut display)?;
 ```
 
-### Using `DynamicTga` to draw an image
-
-The previous example had the limitation that the color format needed to be known at compile
-time. In some use cases this can be a problem, for example if user supplied images should
-be displayed. To handle these cases `DynamicTga` can be used, which performs color conversion
-if necessary.
-
-```rust
-use embedded_graphics::{image::Image, pixelcolor::Rgb888, prelude::*};
-use tinytga::DynamicTga;
-
-// Include an image from a local path as bytes
-let data = include_bytes!("../tests/chessboard_4px_rle.tga");
-
-let tga = DynamicTga::from_slice(data).unwrap();
-
-let image = Image::new(&tga, Point::zero());
-
-image.draw(&mut display)?;
-```
 ### Accessing pixels using an embedded-graphics color type
 
 If [embedded-graphics] is not used to draw the TGA image, the color types provided by
@@ -66,7 +42,7 @@ If [embedded-graphics] is not used to draw the TGA image, the color types provid
 
 ```rust
 use embedded_graphics::{prelude::*, pixelcolor::Rgb888};
-use tinytga::{Bpp, ImageOrigin, ImageType, RawPixel, Tga, TgaHeader};
+use tinytga::Tga;
 
 // Include an image from a local path as bytes
 let data = include_bytes!("../tests/chessboard_4px_rle.tga");
@@ -90,7 +66,7 @@ accessed with the `pixels` method on
 
 ```rust
 use embedded_graphics::{prelude::*, pixelcolor::Rgb888};
-use tinytga::{Bpp, ImageOrigin, ImageType, RawPixel, RawTga, TgaHeader};
+use tinytga::{Bpp, Compression, DataType, ImageOrigin, RawPixel, RawTga, TgaHeader};
 
 // Include an image from a local path as bytes.
 let data = include_bytes!("../tests/chessboard_4px_rle.tga");
@@ -104,7 +80,8 @@ assert_eq!(
     TgaHeader {
         id_len: 0,
         has_color_map: false,
-        image_type: ImageType::RleTruecolor,
+        data_type: DataType::TrueColor,
+        compression: Compression::Rle,
         color_map_start: 0,
         color_map_len: 0,
         color_map_depth: None,
@@ -124,12 +101,14 @@ let pixels: Vec<_> = img.pixels().collect();
 
 ## Embedded-graphics drawing performance
 
-`Tga` should by used instead of `DynamicTga` when possible to reduce the risk of
-accidentally adding unnecessary color conversions.
-
 `tinytga` uses different code paths to draw images with different `ImageOrigin`s.
 The performance difference between the origins will depend on the display driver, but using
 images with the origin at the top left corner will generally result in the best performance.
+
+## Minimum supported Rust version
+
+The minimum supported Rust version for tinytga is `1.61` or greater.
+Ensure you have the correct version of Rust installed, preferably through <https://rustup.rs>.
 
 [embedded-graphics]: https://docs.rs/embedded-graphics
 

@@ -11,10 +11,6 @@
 //!
 //! This example demonstrates how a TGA image can be drawn to a [embedded-graphics] draw target.
 //!
-//! The code uses the [`Tga`] struct and only works if the color format inside the TGA file is known
-//! at compile time. While this makes the code less flexible it offers the best performance by
-//! making sure that no unnecessary color conversions are used.
-//!
 //! ```rust
 //! # fn main() -> Result<(), core::convert::Infallible> {
 //! # let mut display = embedded_graphics::mock_display::MockDisplay::default();
@@ -32,29 +28,6 @@
 //! # Ok::<(), core::convert::Infallible>(()) }
 //! ```
 //!
-//! ## Using `DynamicTga` to draw an image
-//!
-//! The previous example had the limitation that the color format needed to be known at compile
-//! time. In some use cases this can be a problem, for example if user supplied images should
-//! be displayed. To handle these cases [`DynamicTga`] can be used, which performs color conversion
-//! if necessary.
-//!
-//! ```rust
-//! # fn main() -> Result<(), core::convert::Infallible> {
-//! # let mut display = embedded_graphics::mock_display::MockDisplay::<Rgb888>::default();
-//! use embedded_graphics::{image::Image, pixelcolor::Rgb888, prelude::*};
-//! use tinytga::DynamicTga;
-//!
-//! // Include an image from a local path as bytes
-//! let data = include_bytes!("../tests/chessboard_4px_rle.tga");
-//!
-//! let tga = DynamicTga::from_slice(data).unwrap();
-//!
-//! let image = Image::new(&tga, Point::zero());
-//!
-//! image.draw(&mut display)?;
-//! # Ok::<(), core::convert::Infallible>(()) }
-//! ```
 //! ## Accessing pixels using an embedded-graphics color type
 //!
 //! If [embedded-graphics] is not used to draw the TGA image, the color types provided by
@@ -63,7 +36,7 @@
 //!
 //! ```rust
 //! use embedded_graphics::{prelude::*, pixelcolor::Rgb888};
-//! use tinytga::{Bpp, ImageOrigin, ImageType, RawPixel, Tga, TgaHeader};
+//! use tinytga::Tga;
 //!
 //! // Include an image from a local path as bytes
 //! let data = include_bytes!("../tests/chessboard_4px_rle.tga");
@@ -87,7 +60,7 @@
 //!
 //! ```rust
 //! use embedded_graphics::{prelude::*, pixelcolor::Rgb888};
-//! use tinytga::{Bpp, ImageOrigin, ImageType, RawPixel, RawTga, TgaHeader};
+//! use tinytga::{Bpp, Compression, DataType, ImageOrigin, RawPixel, RawTga, TgaHeader};
 //!
 //! // Include an image from a local path as bytes.
 //! let data = include_bytes!("../tests/chessboard_4px_rle.tga");
@@ -101,7 +74,8 @@
 //!     TgaHeader {
 //!         id_len: 0,
 //!         has_color_map: false,
-//!         image_type: ImageType::RleTruecolor,
+//!         data_type: DataType::TrueColor,
+//!         compression: Compression::Rle,
 //!         color_map_start: 0,
 //!         color_map_len: 0,
 //!         color_map_depth: None,
@@ -121,20 +95,19 @@
 //!
 //! # Embedded-graphics drawing performance
 //!
-//! [`Tga`] should by used instead of [`DynamicTga`] when possible to reduce the risk of
-//! accidentally adding unnecessary color conversions.
-//!
 //! `tinytga` uses different code paths to draw images with different [`ImageOrigin`]s.
 //! The performance difference between the origins will depend on the display driver, but using
 //! images with the origin at the top left corner will generally result in the best performance.
+//!
+//! # Minimum supported Rust version
+//!
+//! The minimum supported Rust version for tinytga is `1.61` or greater.
+//! Ensure you have the correct version of Rust installed, preferably through <https://rustup.rs>.
 //!
 //! [`ImageOrigin`]: enum.ImageOrigin.html
 //! [embedded-graphics]: https://docs.rs/embedded-graphics
 //! [`Tga`]: ./struct.Tga.html
 //! [`RawTga`]: ./struct.RawTga.html
-//! [`DynamicTga`]: ./struct.DynamicTga.html
-//! [`image_type`]: ./struct.TgaHeader.html#structfield.image_type
-//! [`pixel_data`]: ./struct.Tga.html#structfield.pixel_data
 
 #![no_std]
 #![deny(missing_docs)]
@@ -148,25 +121,30 @@
 #![deny(unused_qualifications)]
 
 mod color_map;
-mod dynamic_tga;
 mod footer;
 mod header;
-mod packet;
 mod parse_error;
 mod pixels;
-mod raw_pixels;
+mod raw_iter;
 mod raw_tga;
 
 use core::marker::PhantomData;
-use embedded_graphics::{prelude::*, primitives::Rectangle};
+use embedded_graphics::{
+    pixelcolor::{
+        raw::{RawU16, RawU24, RawU8},
+        Gray8, Rgb555, Rgb888,
+    },
+    prelude::*,
+    primitives::Rectangle,
+};
+use raw_iter::{RawColors, Rle, Uncompressed};
 
 pub use crate::{
     color_map::ColorMap,
-    dynamic_tga::DynamicTga,
-    header::{Bpp, ImageOrigin, ImageType, TgaHeader},
+    header::{Bpp, Compression, DataType, ImageOrigin, TgaHeader},
     parse_error::ParseError,
     pixels::Pixels,
-    raw_pixels::{RawPixel, RawPixels},
+    raw_iter::{RawPixel, RawPixels},
     raw_tga::RawTga,
 };
 
@@ -176,44 +154,38 @@ pub struct Tga<'a, C> {
     /// Raw TGA file.
     raw: RawTga<'a>,
 
+    image_color_type: ColorType,
+
     /// Color type.
-    color_type: PhantomData<C>,
+    target_color_type: PhantomData<C>,
 }
 
 impl<'a, C> Tga<'a, C>
 where
-    C: PixelColor + From<<C as PixelColor>::Raw>,
+    C: PixelColor + From<Gray8> + From<Rgb555> + From<Rgb888>,
 {
     /// Parses a TGA image from a byte slice.
-    ///
-    /// # Errors
-    ///
-    /// If the bit depth of the source image does not match the bit depth of the output color type
-    /// `C`, this method will return a [`ParseError::MismatchedBpp`] error.
-    ///
-    /// [`ParseError::MismatchedBpp`]: enum.ParseError.html#variant.MismatchedBpp
     pub fn from_slice(data: &'a [u8]) -> Result<Self, ParseError> {
         let raw = RawTga::from_slice(data)?;
 
-        Self::from_raw(raw)
-    }
-
-    /// Converts a raw TGA object into a embedded-graphics TGA object.
-    ///
-    /// # Errors
-    ///
-    /// If the bit depth of the source image does not match the bit depth of the output color type
-    /// `C`, this method will return a [`ParseError::MismatchedBpp`] error.
-    ///
-    /// [`ParseError::MismatchedBpp`]: enum.ParseError.html#variant.MismatchedBpp
-    pub fn from_raw(raw: RawTga<'a>) -> Result<Self, ParseError> {
-        if C::Raw::BITS_PER_PIXEL != usize::from(raw.color_bpp().bits()) {
-            return Err(ParseError::MismatchedBpp(raw.color_bpp().bits()));
-        }
+        let image_color_type = match (raw.color_bpp(), raw.data_type()) {
+            (Bpp::Bits8, DataType::BlackAndWhite) => ColorType::Gray8,
+            (Bpp::Bits16, DataType::ColorMapped) => ColorType::Rgb555,
+            (Bpp::Bits16, DataType::TrueColor) => ColorType::Rgb555,
+            (Bpp::Bits24, DataType::ColorMapped) => ColorType::Rgb888,
+            (Bpp::Bits24, DataType::TrueColor) => ColorType::Rgb888,
+            _ => {
+                return Err(ParseError::UnsupportedTgaType(
+                    raw.data_type(),
+                    raw.color_bpp(),
+                ));
+            }
+        };
 
         Ok(Tga {
             raw,
-            color_type: PhantomData,
+            image_color_type,
+            target_color_type: PhantomData,
         })
     }
 
@@ -227,8 +199,113 @@ where
     }
 
     /// Returns an iterator over the pixels in this image.
-    pub fn pixels<'b>(&'b self) -> Pixels<'b, 'a, C> {
-        Pixels::new(self.raw.pixels())
+    pub fn pixels(&self) -> Pixels<'_, C> {
+        Pixels::new(self)
+    }
+
+    fn draw_colors<D>(
+        &self,
+        target: &mut D,
+        mut colors: impl Iterator<Item = C>,
+    ) -> Result<(), D::Error>
+    where
+        D: DrawTarget<Color = C>,
+    {
+        let bounding_box = self.bounding_box();
+        if bounding_box.is_zero_sized() {
+            return Ok(());
+        }
+
+        let origin = self.raw.image_origin();
+
+        // TGA files with the origin in the top left corner can be drawn using `fill_contiguous`.
+        // All other origins are drawn by falling back to `draw_iter`.
+        match origin {
+            ImageOrigin::TopLeft => target.fill_contiguous(&bounding_box, colors),
+            ImageOrigin::BottomLeft => {
+                let mut row_rect =
+                    Rectangle::new(Point::zero(), Size::new(bounding_box.size.width, 1));
+
+                for y in bounding_box.rows().rev() {
+                    row_rect.top_left.y = y;
+                    let row_colors = (&mut colors).take(bounding_box.size.width as usize);
+                    target.fill_contiguous(&row_rect, row_colors)?;
+                }
+
+                Ok(())
+            }
+            ImageOrigin::TopRight => {
+                let max_x = bounding_box.bottom_right().map(|p| p.x).unwrap_or_default();
+
+                bounding_box
+                    .points()
+                    .zip(colors)
+                    .map(|(p, c)| Pixel(Point::new(max_x - p.x, p.y), c))
+                    .draw(target)
+            }
+            ImageOrigin::BottomRight => {
+                let bottom_right = bounding_box.bottom_right().unwrap_or_default();
+
+                bounding_box
+                    .points()
+                    .zip(colors)
+                    .map(|(p, c)| Pixel(bottom_right - p, c))
+                    .draw(target)
+            }
+        }
+    }
+
+    fn draw_regular<D, CI, F>(
+        &self,
+        target: &mut D,
+        colors: RawColors<'a, CI::Raw, F>,
+    ) -> Result<(), D::Error>
+    where
+        D: DrawTarget<Color = C>,
+        CI: PixelColor + From<CI::Raw> + Into<C>,
+        RawColors<'a, CI::Raw, F>: Iterator<Item = CI::Raw>,
+    {
+        self.draw_colors(target, colors.map(|c| CI::from(c).into()))
+    }
+
+    fn draw_color_mapped<D, R, F>(
+        &self,
+        target: &mut D,
+        indices: RawColors<'a, R, F>,
+    ) -> Result<(), D::Error>
+    where
+        D: DrawTarget<Color = C>,
+        R: RawData,
+        R::Storage: Into<u32>,
+        RawColors<'a, R, F>: Iterator<Item = R>,
+    {
+        let color_map = if let Some(color_map) = self.raw.color_map() {
+            color_map
+        } else {
+            return Ok(());
+        };
+
+        match self.image_color_type {
+            ColorType::Rgb555 => {
+                let colors = indices.map(|index| {
+                    let index = index.into_inner().into() as usize;
+                    color_map.get::<Rgb555>(index).unwrap().into()
+                });
+
+                self.draw_colors(target, colors)
+            }
+            ColorType::Rgb888 => {
+                let colors = indices.map(|index| {
+                    let index = index.into_inner().into() as usize;
+                    color_map.get::<Rgb888>(index).unwrap().into()
+                });
+
+                self.draw_colors(target, colors)
+            }
+            // Color mapped Gray8 images aren't supported.  Using a color map for Gray8 images
+            // doesn't make sense, because this encoding will always be larger than a type 3 image.
+            ColorType::Gray8 => Ok(()),
+        }
     }
 }
 
@@ -240,7 +317,7 @@ impl<C> OriginDimensions for Tga<'_, C> {
 
 impl<C> ImageDrawable for Tga<'_, C>
 where
-    C: PixelColor + From<<C as PixelColor>::Raw>,
+    C: PixelColor + From<Gray8> + From<Rgb555> + From<Rgb888>,
 {
     type Color = C;
 
@@ -248,7 +325,69 @@ where
     where
         D: DrawTarget<Color = C>,
     {
-        self.raw.draw(target)
+        match self.raw.image_data_bpp() {
+            Bpp::Bits8 => match self.raw.compression() {
+                Compression::Uncompressed => {
+                    let colors = RawColors::<RawU8, Uncompressed>::new(&self.raw);
+
+                    if self.raw.color_map().is_some() {
+                        self.draw_color_mapped(target, colors)
+                    } else {
+                        self.draw_regular::<_, Gray8, _>(target, colors)
+                    }
+                }
+                Compression::Rle => {
+                    let colors = RawColors::<RawU8, Rle>::new(&self.raw);
+
+                    if self.raw.color_map().is_some() {
+                        self.draw_color_mapped(target, colors)
+                    } else {
+                        self.draw_regular::<_, Gray8, _>(target, colors)
+                    }
+                }
+            },
+            Bpp::Bits16 => match self.raw.compression() {
+                Compression::Uncompressed => {
+                    let colors = RawColors::<RawU16, Uncompressed>::new(&self.raw);
+
+                    if self.raw.color_map().is_some() {
+                        self.draw_color_mapped(target, colors)
+                    } else {
+                        self.draw_regular::<_, Rgb555, _>(target, colors)
+                    }
+                }
+                Compression::Rle => {
+                    let colors = RawColors::<RawU16, Rle>::new(&self.raw);
+
+                    if self.raw.color_map().is_some() {
+                        self.draw_color_mapped(target, colors)
+                    } else {
+                        self.draw_regular::<_, Rgb555, _>(target, colors)
+                    }
+                }
+            },
+            Bpp::Bits24 => match self.raw.compression() {
+                Compression::Uncompressed => {
+                    let colors = RawColors::<RawU24, Uncompressed>::new(&self.raw);
+
+                    if self.raw.color_map().is_some() {
+                        self.draw_color_mapped(target, colors)
+                    } else {
+                        self.draw_regular::<_, Rgb888, _>(target, colors)
+                    }
+                }
+                Compression::Rle => {
+                    let colors = RawColors::<RawU24, Rle>::new(&self.raw);
+
+                    if self.raw.color_map().is_some() {
+                        self.draw_color_mapped(target, colors)
+                    } else {
+                        self.draw_regular::<_, Rgb888, _>(target, colors)
+                    }
+                }
+            },
+            Bpp::Bits32 => Ok(()),
+        }
     }
 
     fn draw_sub_image<D>(&self, target: &mut D, area: &Rectangle) -> Result<(), D::Error>
@@ -257,4 +396,11 @@ where
     {
         self.draw(&mut target.translated(-area.top_left).clipped(area))
     }
+}
+
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+pub(crate) enum ColorType {
+    Gray8,
+    Rgb555,
+    Rgb888,
 }

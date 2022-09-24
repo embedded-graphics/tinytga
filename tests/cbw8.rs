@@ -1,4 +1,4 @@
-use tinytga::{Bpp, ImageOrigin, ImageType, RawTga, TgaHeader};
+use tinytga::{Bpp, Compression, DataType, ImageOrigin, RawTga, TgaHeader};
 
 #[test]
 fn cbw8() {
@@ -14,7 +14,8 @@ fn cbw8() {
         TgaHeader {
             id_len: 26,
             has_color_map: false,
-            image_type: ImageType::RleMonochrome,
+            data_type: DataType::BlackAndWhite,
+            compression: Compression::Rle,
             color_map_start: 0,
             color_map_len: 0,
             color_map_depth: None,

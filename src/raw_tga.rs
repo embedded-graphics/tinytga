@@ -1,13 +1,13 @@
-use embedded_graphics::{prelude::*, primitives::Rectangle};
+use embedded_graphics::prelude::*;
 use nom::{bytes::complete::take, IResult};
 
 use crate::{
     color_map::ColorMap,
     footer::TgaFooter,
-    header::{Bpp, ImageOrigin, ImageType, TgaHeader},
+    header::{Bpp, ImageOrigin, TgaHeader},
     parse_error::ParseError,
-    pixels::Pixels,
-    raw_pixels::RawPixels,
+    raw_iter::RawPixels,
+    Compression, DataType,
 };
 
 /// Raw TGA image.
@@ -33,8 +33,11 @@ pub struct RawTga<'a> {
     /// Image size
     size: Size,
 
-    /// Image type
-    image_type: ImageType,
+    /// Data type
+    data_type: DataType,
+
+    /// Compression
+    compression: Compression,
 
     /// Bits per pixel
     bpp: Bpp,
@@ -65,7 +68,8 @@ impl<'a> RawTga<'a> {
             size,
             bpp: header.pixel_depth,
             image_origin: header.image_origin,
-            image_type: header.image_type,
+            data_type: header.data_type,
+            compression: header.compression,
         })
     }
 
@@ -101,9 +105,14 @@ impl<'a> RawTga<'a> {
         self.image_origin
     }
 
-    /// Returns the image type.
-    pub fn image_type(&self) -> ImageType {
-        self.image_type
+    /// Returns the data type.
+    pub fn data_type(&self) -> DataType {
+        self.data_type
+    }
+
+    /// Returns the compression type.
+    pub fn compression(&self) -> Compression {
+        self.compression
     }
 
     /// Returns the raw image data contained in this image.
@@ -128,7 +137,7 @@ impl<'a> RawTga<'a> {
     }
 
     /// Returns an iterator over the raw pixels in this image.
-    pub fn pixels<'b>(&'b self) -> RawPixels<'b, 'a> {
+    pub fn pixels(&self) -> RawPixels<'_> {
         RawPixels::new(self)
     }
 
@@ -152,7 +161,7 @@ impl<'a> RawTga<'a> {
     /// # Performance
     ///
     /// To save memory the footer is parsed every time this method is called.
-    pub fn developer_directory(&self) -> Option<&[u8]> {
+    pub fn developer_directory(&self) -> Option<&'a [u8]> {
         TgaFooter::parse(self.data).and_then(|footer| footer.developer_directory(self.data))
     }
 
@@ -161,7 +170,7 @@ impl<'a> RawTga<'a> {
     /// # Performance
     ///
     /// To save memory the footer is parsed every time this method is called.
-    pub fn extension_area(&self) -> Option<&[u8]> {
+    pub fn extension_area(&self) -> Option<&'a [u8]> {
         TgaFooter::parse(self.data).and_then(|footer| footer.extension_area(self.data))
     }
 
@@ -172,31 +181,13 @@ impl<'a> RawTga<'a> {
     /// # Performance
     ///
     /// To save memory the header is parsed every time this method is called.
-    pub fn image_id(&self) -> Option<&[u8]> {
+    pub fn image_id(&self) -> Option<&'a [u8]> {
         let (input, header) = TgaHeader::parse(self.data).ok()?;
 
         parse_image_id(input, &header)
             .ok()
             .map(|(_input, id)| id)
             .filter(|id| !id.is_empty())
-    }
-
-    pub(crate) fn draw<D>(&self, target: &mut D) -> Result<(), D::Error>
-    where
-        D: DrawTarget,
-        D::Color: From<<D::Color as PixelColor>::Raw>,
-    {
-        let pixels = Pixels::<D::Color>::new(self.pixels());
-
-        // TGA files with the origin in the top left corner can be drawn using `fill_contiguous`.
-        // All other origins are drawn by falling back to `draw_iter`.
-        if self.image_origin() == ImageOrigin::TopLeft {
-            let bounding_box = Rectangle::new(Point::zero(), self.size);
-
-            target.fill_contiguous(&bounding_box, pixels.map(|Pixel(_, color)| color))
-        } else {
-            target.draw_iter(pixels)
-        }
     }
 }
 

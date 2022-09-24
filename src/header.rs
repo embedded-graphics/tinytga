@@ -1,9 +1,10 @@
-use crate::parse_error::ParseError;
 use nom::{
     combinator::{map, map_opt, map_res},
     number::complete::{le_u16, le_u8},
     IResult,
 };
+
+use crate::parse_error::ParseError;
 
 /// Bits per pixel.
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
@@ -59,60 +60,47 @@ impl Bpp {
     }
 }
 
-/// Image type
+/// Image data compression.
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
-pub enum ImageType {
-    /// Image contains no pixel data
-    Empty = 0,
-
-    /// Color mapped image
-    ColorMapped = 1,
-
-    /// Truecolor image
-    Truecolor = 2,
-
-    /// Monochrome (greyscale) image
-    Monochrome = 3,
-
-    /// Run length encoded color mapped image
-    RleColorMapped = 9,
-
-    /// Run length encoded RGB image
-    RleTruecolor = 10,
-
-    /// Run length encoded monochrome (greyscale) image
-    RleMonochrome = 11,
+pub enum Compression {
+    /// Uncompressed image data.
+    Uncompressed,
+    /// Run-length encoded image data.
+    Rle,
 }
 
-impl ImageType {
-    fn parse(input: &[u8]) -> IResult<&[u8], Self> {
-        map_res(le_u8, |b| match b {
-            0 => Ok(Self::Empty),
-            1 => Ok(Self::ColorMapped),
-            2 => Ok(Self::Truecolor),
-            3 => Ok(Self::Monochrome),
-            9 => Ok(Self::RleColorMapped),
-            10 => Ok(Self::RleTruecolor),
-            11 => Ok(Self::RleMonochrome),
-            other => Err(ParseError::UnsupportedImageType(other)),
-        })(input)
+/// Image data type.
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+pub enum DataType {
+    /// No image data.
+    NoData,
+    /// Color mapped.
+    ColorMapped,
+    /// True color.
+    TrueColor,
+    /// Black and white or grayscale.
+    BlackAndWhite,
+}
+
+fn parse_image_type(image_type: u8) -> Result<(DataType, Compression), ParseError> {
+    if image_type & !0b1011 != 0 || image_type == 8 {
+        return Err(ParseError::UnsupportedImageType(image_type));
     }
 
-    /// Returns `true` when the image is RLE encoded.
-    pub fn is_rle(self) -> bool {
-        match self {
-            ImageType::RleColorMapped | ImageType::RleTruecolor | ImageType::RleMonochrome => true,
-            _ => false,
-        }
-    }
+    let data_type = match image_type & 0x3 {
+        1 => DataType::ColorMapped,
+        2 => DataType::TrueColor,
+        3 => DataType::BlackAndWhite,
+        _ => DataType::NoData,
+    };
 
-    /// Returns `true` when the image is monochrome.
-    pub fn is_monochrome(self) -> bool {
-        match self {
-            ImageType::Monochrome | ImageType::RleMonochrome => true,
-            _ => false,
-        }
-    }
+    let compression = if image_type & 0x8 != 0 {
+        Compression::Rle
+    } else {
+        Compression::Uncompressed
+    };
+
+    Ok((data_type, compression))
 }
 
 /// Image origin
@@ -139,10 +127,7 @@ impl ImageOrigin {
     }
 
     pub(crate) fn is_bottom(self) -> bool {
-        match self {
-            Self::BottomLeft | Self::BottomRight => true,
-            _ => false,
-        }
+        matches!(self, Self::BottomLeft | Self::BottomRight)
     }
 }
 
@@ -157,8 +142,11 @@ pub struct TgaHeader {
     /// Whether a color map is included in the image data
     pub has_color_map: bool,
 
-    /// Image type
-    pub image_type: ImageType,
+    /// Data type.
+    pub data_type: DataType,
+
+    /// Compression.
+    pub compression: Compression,
 
     /// Color map origin
     pub color_map_start: u16,
@@ -195,7 +183,7 @@ impl TgaHeader {
     pub(crate) fn parse(input: &[u8]) -> IResult<&[u8], Self> {
         let (input, id_len) = le_u8(input)?;
         let (input, has_color_map) = has_color_map(input)?;
-        let (input, image_type) = ImageType::parse(input)?;
+        let (input, (data_type, compression)) = map_res(le_u8, parse_image_type)(input)?;
         let (input, color_map_start) = le_u16(input)?;
         let (input, color_map_len) = le_u16(input)?;
         let (input, color_map_depth) = Bpp::parse_opt(input)?;
@@ -214,7 +202,8 @@ impl TgaHeader {
             TgaHeader {
                 id_len,
                 has_color_map,
-                image_type,
+                data_type,
+                compression,
                 color_map_start,
                 color_map_len,
                 color_map_depth,

@@ -5,7 +5,7 @@ use embedded_graphics::{
     prelude::*,
 };
 use paste::paste;
-use tinytga::{DynamicTga, Tga};
+use tinytga::Tga;
 
 const CHESSBOARD_PATTERN: &[&str] = &[
     "WKWK", //
@@ -32,10 +32,10 @@ const COLOR_PATTERN: &[&str] = &[
 
 #[test]
 fn chessboard_compressed() {
-    let tga: Tga<Rgb888> = Tga::from_slice(include_bytes!("./chessboard_4px_rle.tga")).unwrap();
+    let tga = Tga::from_slice(include_bytes!("./chessboard_4px_rle.tga")).unwrap();
     let image = Image::new(&tga, Point::zero());
 
-    let mut display = MockDisplay::new();
+    let mut display = MockDisplay::<Rgb888>::new();
     image.draw(&mut display).unwrap();
 
     display.assert_pattern(CHESSBOARD_PATTERN);
@@ -43,10 +43,10 @@ fn chessboard_compressed() {
 
 #[test]
 fn chessboard_uncompressed() {
-    let tga: Tga<Rgb888> = Tga::from_slice(include_bytes!("./chessboard_raw.tga")).unwrap();
+    let tga = Tga::from_slice(include_bytes!("./chessboard_raw.tga")).unwrap();
     let image = Image::new(&tga, Point::zero());
 
-    let mut display = MockDisplay::new();
+    let mut display = MockDisplay::<Rgb888>::new();
     image.draw(&mut display).unwrap();
 
     display.assert_pattern(CHESSBOARD_PATTERN);
@@ -54,26 +54,25 @@ fn chessboard_uncompressed() {
 
 fn test_tga<C>(data: &[u8], pattern: &[&str])
 where
-    C: PixelColor + From<<C as PixelColor>::Raw> + ColorMapping,
+    C: PixelColor + From<Gray8> + From<Rgb555> + From<Rgb888> + ColorMapping,
 {
-    let tga: Tga<C> = Tga::from_slice(data).unwrap();
+    let tga = Tga::from_slice(data).unwrap();
     let image = Image::new(&tga, Point::zero());
 
-    let mut display = MockDisplay::new();
+    let mut display = MockDisplay::<C>::new();
     image.draw(&mut display).unwrap();
 
     display.assert_pattern(pattern);
 }
 
-fn test_dynamic_tga<C>(data: &[u8], pattern: &[&str])
+fn test_pixels_iter<C>(data: &[u8], pattern: &[&str])
 where
-    C: PixelColor + From<<C as PixelColor>::Raw> + Into<Rgb888> + ColorMapping,
+    C: PixelColor + From<Gray8> + From<Rgb555> + From<Rgb888> + ColorMapping,
 {
-    let tga = DynamicTga::from_slice(data).unwrap();
-    let image = Image::new(&tga, Point::zero());
+    let tga = Tga::from_slice(data).unwrap();
 
-    let mut display = MockDisplay::new();
-    image.draw(&mut display).unwrap();
+    let mut display = MockDisplay::<Rgb888>::new();
+    tga.pixels().draw(&mut display).unwrap();
 
     let expected: MockDisplay<Rgb888> = MockDisplay::<C>::from_pattern(pattern).map(|c| c.into());
 
@@ -94,13 +93,13 @@ macro_rules! test_tga {
             }
 
             #[test]
-            fn [<$image_type _bl_dynamic>]() {
-                test_dynamic_tga::<$color_type>(include_bytes!(concat!(stringify!($image_type), "_bl.tga")), $pattern);
+            fn [<$image_type _bl_pixels_iter>]() {
+                test_pixels_iter::<$color_type>(include_bytes!(concat!(stringify!($image_type), "_bl.tga")), $pattern);
             }
 
             #[test]
-            fn [<$image_type _tl_dynamic>]() {
-                test_dynamic_tga::<$color_type>(include_bytes!(concat!(stringify!($image_type), "_tl.tga")), $pattern);
+            fn [<$image_type _tl_pixels_iter>]() {
+                test_pixels_iter::<$color_type>(include_bytes!(concat!(stringify!($image_type), "_tl.tga")), $pattern);
             }
         }
     };
