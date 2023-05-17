@@ -1,6 +1,6 @@
 [package]
 name = "tinytga"
-version = "0.4.1"
+version = "0.5.0"
 description = "No-std, low memory footprint TGA image loader"
 authors = ["James Waples <james@wapl.es>", "Ralf Fuest <mail@rfuest.de>"]
 edition = "2021"

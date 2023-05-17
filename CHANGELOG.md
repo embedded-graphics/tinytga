@@ -6,6 +6,8 @@
 
 ## [Unreleased] - ReleaseDate
 
+## [0.5.0] - 2023-05-17
+
 ### Added
 
 - [#16](https://github.com/embedded-graphics/tinytga/pull/16) Added support for bottom right and top right image origins.
@@ -128,7 +130,8 @@
 - [#218](https://github.com/embedded-graphics/embedded-graphics/pull/218) Test README examples in CI and update them to work with latest crate versions.
 
 <!-- next-url -->
-[unreleased]: https://github.com/embedded-graphics/tinytga/compare/v0.4.1...HEAD
+[unreleased]: https://github.com/embedded-graphics/tinytga/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/embedded-graphics/tinytga/compare/v0.4.1...v0.5.0
 
 [0.4.1]: https://github.com/embedded-graphics/tinytga/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/embedded-graphics/tinytga/compare/v0.4.0-beta.1...v0.4.0
