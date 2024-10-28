@@ -1,6 +1,6 @@
 use crate::{parse_error::ParseError, Bpp, TgaHeader};
 use embedded_graphics::{
-    iterator::raw::RawDataSlice, pixelcolor::raw::LittleEndian, prelude::PixelColor,
+    iterator::raw::RawDataSlice, pixelcolor::raw::LittleEndianMsb0, prelude::PixelColor,
 };
 use nom::bytes::complete::take;
 
@@ -79,7 +79,7 @@ impl<'a> ColorMap<'a> {
     pub(crate) fn get<C>(&self, index: usize) -> Option<C>
     where
         C: PixelColor + From<C::Raw>,
-        RawDataSlice<'a, C::Raw, LittleEndian>: IntoIterator<Item = C::Raw>,
+        RawDataSlice<'a, C::Raw, LittleEndianMsb0>: IntoIterator<Item = C::Raw>,
     {
         RawDataSlice::new(self.data)
             .into_iter()
