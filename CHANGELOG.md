@@ -6,6 +6,10 @@
 
 ## [Unreleased] - ReleaseDate
 
+### Changed
+
+- **(breaking)** [#22](https://github.com/embedded-graphics/tinytga/pull/22) Use 1.81 as MSRV.
+
 ## [0.5.0] - 2023-05-17
 
 ### Added

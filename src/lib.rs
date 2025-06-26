@@ -101,7 +101,7 @@
 //!
 //! # Minimum supported Rust version
 //!
-//! The minimum supported Rust version for tinytga is `1.61` or greater.
+//! The minimum supported Rust version for tinytga is `1.81` or greater.
 //! Ensure you have the correct version of Rust installed, preferably through <https://rustup.rs>.
 //!
 //! [`ImageOrigin`]: enum.ImageOrigin.html
