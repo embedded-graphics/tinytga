@@ -5,8 +5,7 @@ use embedded_graphics::{
 };
 use tinytga::{Bpp, Compression, DataType, ImageOrigin, Tga};
 
-const WIDTH: usize = 240;
-const HEIGHT: usize = 320;
+const IMAGE_SIZE: Size = Size::new(240, 320);
 
 // TODO: use e-g framebuffer when it's added
 #[derive(Debug, PartialEq)]
@@ -19,7 +18,7 @@ impl<C: PixelColor + From<Rgb888> + std::fmt::Debug> Framebuffer<C> {
         let color = C::from(Rgb888::BLACK);
 
         Self {
-            pixels: [[color; WIDTH]; HEIGHT],
+            pixels: [[color; IMAGE_SIZE.width as usize]; IMAGE_SIZE.height as usize],
         }
     }
 
@@ -42,7 +41,16 @@ impl<C: PixelColor + From<Rgb888> + std::fmt::Debug> Framebuffer<C> {
         let first_error = zipped()
             .enumerate()
             .find(|(_, (a, b))| a != b)
-            .map(|(i, (a, b))| (Point::new((i % WIDTH) as i32, (i / WIDTH) as i32), a, b));
+            .map(|(i, (a, b))| {
+                (
+                    Point::new(
+                        (i % IMAGE_SIZE.width as usize) as i32,
+                        (i / IMAGE_SIZE.width as usize) as i32,
+                    ),
+                    a,
+                    b,
+                )
+            });
 
         if self != expected {
             let first_error = first_error.unwrap();
@@ -80,24 +88,21 @@ impl<C> OriginDimensions for Framebuffer<C> {
 }
 
 fn expected_rgb555() -> Framebuffer<Rgb555> {
-    Framebuffer::from_image(ImageRawLE::<Rgb555>::new(
-        include_bytes!("logo_rgb555.raw"),
-        WIDTH as u32,
-    ))
+    Framebuffer::from_image(
+        ImageRawLE::<Rgb555>::new(include_bytes!("logo_rgb555.raw"), IMAGE_SIZE).unwrap(),
+    )
 }
 
 fn expected_rgb888() -> Framebuffer<Rgb888> {
-    Framebuffer::from_image(ImageRawBE::<Rgb888>::new(
-        include_bytes!("logo_rgb888.raw"),
-        WIDTH as u32,
-    ))
+    Framebuffer::from_image(
+        ImageRawBE::<Rgb888>::new(include_bytes!("logo_rgb888.raw"), IMAGE_SIZE).unwrap(),
+    )
 }
 
 fn expected_gray8() -> Framebuffer<Gray8> {
-    Framebuffer::from_image(ImageRawBE::<Gray8>::new(
-        include_bytes!("logo_gray8.raw"),
-        WIDTH as u32,
-    ))
+    Framebuffer::from_image(
+        ImageRawBE::<Gray8>::new(include_bytes!("logo_gray8.raw"), IMAGE_SIZE).unwrap(),
+    )
 }
 
 #[track_caller]
